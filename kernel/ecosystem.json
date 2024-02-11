@@ -1,0 +1,106 @@
+{
+    "bin": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "bin"
+    },
+    "boot": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "boot"
+    },
+    "home": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "home"
+    },
+    "lib": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "lib"
+    },
+    "sys": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "sys"
+    },
+    "temp": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "temp"
+    },
+    "usr": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "usr"
+    },
+    "var": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "var"
+    },
+    "home/Monarch": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "Monarch"
+    },
+    "home/test_subject": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "test_subject"
+    },
+    "home/Monarch/Desktop": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "Desktop"
+    },
+    "home/Monarch/Documents": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "Documents"
+    },
+    "home/Monarch/Downloads": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "10 Feb 2024",
+        "name": "Downloads"
+    }
+}
