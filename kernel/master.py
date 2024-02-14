@@ -1,40 +1,68 @@
-import importlib
 import shutil, json, os
+import importlib.util
 from dataclasses import dataclass, field
-import os
-
 
 ######## refactored form of the original code ---version 0.0.2 ########
 @dataclass
 class Terminal:
-    current_directory = root_dir = os.path.join(os.getcwd(), "root")
     user:str = "root"
-    kernel:str = os.getcwd()
+    kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
+    current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
-    current_time:str = "10 Feb 2024"
-    env_path_var:str = os.path.abspath(os.path.join(root_dir, "bin"))
+    current_time:str = "13 Feb 2024"
+    clipout: str = kernel
+    env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
 
     def __post_init__(self):
         self.load_commands()
+        os.chdir(self.kernel)
+        self.cout(f"Current System Directory: {os.getcwd()}")
+        self.cout(f"Clipout: {self.clipout}")
+        self.cout(f"Welcome to PathOS, {self.user}!")
+        self.initialise()
 
+    
     def load_commands(self):
-        for filename in os.listdir(self.env_path_var):
-            if filename.endswith('.py'):
-                command_name = filename[:-3]  # hack off ".py" so it doesn't jam up the command name later on
-                module = importlib.import_module(f'bin.{command_name}')
-                self.commands[command_name] = module
+        'load all commands from the bin directory.'
+        for file in os.listdir(self.env_path_var):
+            if file.endswith(".py"):
+                module = file[:-3]
+                try: ###this shit took me HOURS to fix - do NOT touch this
+                    spec = importlib.util.spec_from_file_location(module, f"{self.env_path_var}/{file}")
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                except Exception as e:
+                    print(f"Error processing command {file}: {e}")
 
-    def execute_command(self, command, *args):
+
+        print(self.commands)
+
+    def execute_command(self, command, args):
         if command in self.commands:
-            module = self.commands[command]
-            if hasattr(module, command):
-                func = getattr(module, command)
-                func(self, *args)
+            to_execute = self.commands[command]
+            to_execute(self, args)
         else:
             print(f'Unknown command: {command}')
+    
+    def cout(self, message, endl="\n"):
+        print(message.replace("\\","/"), end=endl)
 
+    def initialise(self):
+        'initialise the system.'
+        while True:
+            to_strip = len(self.clipout)
+            dir_prompt:str = f"{self.user}@PathOS:{self.current_directory[to_strip:]}~$ "
+            self.cout(dir_prompt,endl="")
+            comm = input()
+            self.cout("Received command: " + comm)
+            if not comm:
+                continue
+            comslist = comm.split()
+            command = comslist[0]
+            args = comslist[1:]
+            self.execute_command(command, args)
 
     ###all of these are kernel methods - required for the system to function properly - do not mess with these
     ###unless you know what you are doing
@@ -42,6 +70,7 @@ class Terminal:
         'get the registry of the system.'
         with open(self.registry, "r") as file:
             return json.load(file)
+        
     def get_users(self):
         'get the users of the system.'
         return self.get_registry()["users"]
@@ -234,5 +263,6 @@ class Terminal:
         return os.listdir(os.path.join(self.root_dir, path_to_directory))
     
     ### end of system methods - os methods start here
+
 
 terminal = Terminal()
