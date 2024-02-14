@@ -1,11 +1,14 @@
 import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
+import time
+import os
 
 ######## refactored form of the original code ---version 0.0.2 ########
 @dataclass
 class Terminal:
     user:str = "root"
+    groups: str = "root"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     registry:str = "registry.json"
@@ -18,26 +21,24 @@ class Terminal:
     def __post_init__(self):
         self.load_commands()
         os.chdir(self.kernel)
-        self.cout(f"Current System Directory: {os.getcwd()}")
-        self.cout(f"Clipout: {self.clipout}")
         self.cout(f"Welcome to PathOS, {self.user}!")
         self.initialise()
-
     
     def load_commands(self):
         'load all commands from the bin directory.'
         for file in os.listdir(self.env_path_var):
             if file.endswith(".py"):
                 module = file[:-3]
-                try: ###this shit took me HOURS to fix - do NOT touch this
+                try:
                     spec = importlib.util.spec_from_file_location(module, f"{self.env_path_var}/{file}")
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
+                    if hasattr(mod, "main") and callable(mod.main):
+                        self.commands[module] = mod.main
+                    else:
+                        print(f"Error: {module} module does not have a 'main' function.")
                 except Exception as e:
                     print(f"Error processing command {file}: {e}")
-
-
-        print(self.commands)
 
     def execute_command(self, command, args):
         if command in self.commands:
@@ -77,20 +78,32 @@ class Terminal:
 
     def checkxistence(self, path):
         'check if a file or directory exists. accepts a relpath string.'
-        return os.path.exists(os.path.join(self.root_dir, path))
+        ret = os.path.exists(os.path.join(self.root_dir, path))
+        if not ret:
+            self.cout(f"Path given does not exist.")
+        return ret
+
     
     def legal(self, filepath=str):
         """Clamp to root. accepts a relpath string. Check if the specified path is within the root_dir. the path doesn't
         need to point to an existing path, just check if it's valid."""
-        return os.path.commonpath([os.path.abspath(filepath), self.root_dir]) == self.root_dir
+        ret = os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/") == self.root_dir
+        print(os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/"), self.root_dir)
+        if not ret:
+            self.cout(f"///SECURITY ERROR///\nwall.quad detected an attempt to escape root.")
+        return ret
 
     def validated(self, filepath=str):
         """check if the specified exists AND is within the root_dir."""
-        return self.checkxistence(filepath) and self.legal(filepath)
+        ret = self.checkxistence(filepath) and self.legal(filepath)
+        if not ret:
+            self.cout("///VALIDATION ERROR///")
+        return ret
+        
     
     def allowed(self, filepath, action, user, groups):
         'check if the user is allowed to perform the action on the path.'
-        with open("metainf.json", "r") as meta:
+        with open(self.filesystem, "r") as meta:
             data = json.load(meta)
         if user == "root":
             return 1
