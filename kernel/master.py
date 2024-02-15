@@ -3,14 +3,17 @@ import importlib.util
 from dataclasses import dataclass, field
 import time
 import os
+import syscheck
 
 ######## refactored form of the original code ---version 0.0.2 ########
+
 @dataclass
 class Terminal:
     user:str = "root"
     groups: str = "root"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
+    boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
     current_time:str = "13 Feb 2024"
@@ -19,11 +22,25 @@ class Terminal:
     commands: dict = field(default_factory=dict)
 
     def __post_init__(self):
+        self.boot_up()
         self.load_commands()
         os.chdir(self.kernel)
         self.cout(f"Welcome to PathOS, {self.user}!")
         self.initialise()
-    
+
+    def boot_up(self):
+        if self.checkxistence(self.boot):
+            with open(self.boot, "r") as file:
+                temp = file.read()
+                if temp != syscheck.pathos_boot_module:
+                    self.cout("///FATAL_CRASH.KERNEL.PANIC///\nBoot file is corrupted. Please reinstall the system.")
+                    exit(1)
+                else:
+                    print("---BOOT SUCCESS---")
+        else:
+            self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
+            exit(1)
+
     def load_commands(self):
         'load all commands from the bin directory.'
         for file in os.listdir(self.env_path_var):
@@ -82,7 +99,6 @@ class Terminal:
         if not ret:
             self.cout(f"Path given does not exist.")
         return ret
-
     
     def legal(self, filepath=str):
         """Clamp to root. accepts a relpath string. Check if the specified path is within the root_dir. the path doesn't
@@ -100,7 +116,6 @@ class Terminal:
             self.cout("///VALIDATION ERROR///")
         return ret
         
-    
     def allowed(self, filepath, action, user, groups):
         'check if the user is allowed to perform the action on the path.'
         with open(self.filesystem, "r") as meta:
@@ -136,7 +151,6 @@ class Terminal:
         if not os.path.exists(self.filesystem):
             with open(self.filesystem, "w") as file:
                 json.dump({}, file, indent=4)
-    
 
         for filepath, dirs, files in os.walk(self.root_dir):
             for file in files:
@@ -275,7 +289,27 @@ class Terminal:
         'get the contents of a directory. accepts a relpath string.'
         return os.listdir(os.path.join(self.root_dir, path_to_directory))
     
-    ### end of system methods - os methods start here
+    ## methods that expose the kernel to the bus
+    
+    def __pathos_bus_cd(self, path):
+        'pathos bus method to expose the cd command to the bus. changes active directory of the current working system.'
+        self.current_directory = os.path.normpath(os.path.join(self.current_directory, path))
+    
+    def __pathos_bus_ls(self, path):
+        'pathos bus method to expose the ls command to the bus.'
+        return self.get_directory_contents(path)
+    
+    ## os methods - methods that serve the exposed kernel via the bus
+    ## aka, "shit to use while scripting"
 
+    def change_directory(self, path):
+        'scripting method to change directories'
+        target = os.path.normpath(os.path.join(self.current_directory, path))
+        if self.validated(target):
+            if not self.allowed(target, "r", self.user, self.groups):
+                raise ValueError("1: Forbidden Route")
+            self.current_directory = target
+            return
+        raise ValueError("2: Validation Check Failed")
 
 terminal = Terminal()
