@@ -1,4 +1,12 @@
 {
+    ".": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "root"
+    },
     "bin": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
@@ -11,8 +19,104 @@
         "permissions": "drwxr-xr-x",
         "owner": "root",
         "group": "root",
-        "size": 824,
+        "size": 467,
         "last_modified": "13 Feb 2024",
         "name": "cd.py"
+    },
+    "boot": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "boot"
+    },
+    "bin/__pycache__": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "__pycache__"
+    },
+    "bin/__pycache__/cd.cpython-310.pyc": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 629,
+        "last_modified": "13 Feb 2024",
+        "name": "cd.cpython-310.pyc"
+    },
+    "boot/boot.bin": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 13922,
+        "last_modified": "13 Feb 2024",
+        "name": "boot.bin"
+    },
+    "root/bin": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "bin"
+    },
+    "root/boot": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "boot"
+    },
+    "root/bin/cd.py": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 467,
+        "last_modified": "13 Feb 2024",
+        "name": "cd.py"
+    },
+    "root/bin/ls.py": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 1438,
+        "last_modified": "13 Feb 2024",
+        "name": "ls.py"
+    },
+    "root/bin/__pycache__": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "13 Feb 2024",
+        "name": "__pycache__"
+    },
+    "root/bin/__pycache__/cd.cpython-310.pyc": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 629,
+        "last_modified": "13 Feb 2024",
+        "name": "cd.cpython-310.pyc"
+    },
+    "root/bin/__pycache__/ls.cpython-310.pyc": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 1143,
+        "last_modified": "13 Feb 2024",
+        "name": "ls.cpython-310.pyc"
+    },
+    "root/boot/boot.bin": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 13922,
+        "last_modified": "13 Feb 2024",
+        "name": "boot.bin"
     }
 }

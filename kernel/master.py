@@ -4,12 +4,13 @@ from dataclasses import dataclass, field
 import time
 import os
 import syscheck
+import tables
 
 ######## refactored form of the original code ---version 0.0.2 ########
 
 @dataclass
 class Terminal:
-    user:str = "root"
+    user:str = "Monarch"
     groups: str = "root"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
@@ -17,7 +18,7 @@ class Terminal:
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
     current_time:str = "13 Feb 2024"
-    clipout: str = kernel
+    clipout: str = root_dir
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
 
@@ -62,7 +63,7 @@ class Terminal:
             to_execute = self.commands[command]
             to_execute(self, args)
         else:
-            print(f'Unknown command: {command}')
+            print(f'Silver: command "{command}" not found.')
     
     def cout(self, message, endl="\n"):
         print(message.replace("\\","/"), end=endl)
@@ -71,10 +72,9 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.user}@PathOS:{self.current_directory[to_strip:]}~$ "
+            dir_prompt:str = f"{self.user.lower()}@path_OS:{self.current_directory[to_strip:].lower()}/ $ "
             self.cout(dir_prompt,endl="")
             comm = input()
-            self.cout("Received command: " + comm)
             if not comm:
                 continue
             comslist = comm.split()
@@ -104,7 +104,6 @@ class Terminal:
         """Clamp to root. accepts a relpath string. Check if the specified path is within the root_dir. the path doesn't
         need to point to an existing path, just check if it's valid."""
         ret = os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/") == self.root_dir
-        print(os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/"), self.root_dir)
         if not ret:
             self.cout(f"///SECURITY ERROR///\nwall.quad detected an attempt to escape root.")
         return ret
@@ -112,29 +111,33 @@ class Terminal:
     def validated(self, filepath=str):
         """check if the specified exists AND is within the root_dir."""
         ret = self.checkxistence(filepath) and self.legal(filepath)
-        if not ret:
-            self.cout("///VALIDATION ERROR///")
         return ret
         
     def allowed(self, filepath, action, user, groups):
         'check if the user is allowed to perform the action on the path.'
-        with open(self.filesystem, "r") as meta:
-            data = json.load(meta)
+        filepath = os.path.relpath(filepath, self.root_dir)
         if user == "root":
             return 1
+        with open(self.filesystem, "r") as meta:
+            data = json.load(meta)
         # Check if the path exists in the data
         if filepath in data:
             # Get the owner and group of the file
             owner = data[filepath]["owner"]
-            group = data[filepath]["group"]
+            groups = data[filepath]["group"]
             permissions = data[filepath]["permissions"]
+
+            #get the perms of the file
+            with open(self.registry, "r") as file:
+                reg_object = json.load(file)
+                grps = reg_object["groups"]
             # Check if the user is the owner
             if user == owner:
                 if action in permissions[1:4]:
                     return 1
             # Check if the user is in the group
-            for group_name in groups:
-                if user in groups[group_name]:
+            for group_name in grps:
+                if user in group_name:
                     if action in permissions[4:7]:
                         return 1
             # Check if the user is not the owner and not in the group
@@ -155,7 +158,7 @@ class Terminal:
         for filepath, dirs, files in os.walk(self.root_dir):
             for file in files:
                 fullpath = os.path.join(filepath, file) # get the full path of the file
-                relative_path = os.path.relpath(fullpath, self.root_dir) # get the relative path of the file
+                relative_path = os.path.relpath(fullpath, self.kernel) # get the relative path of the file
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
                     permissions="drwxr-xr-x",
@@ -168,7 +171,7 @@ class Terminal:
     
             for dir in dirs:
                 path = os.path.join(filepath, dir)
-                relative_path = os.path.relpath(path, self.root_dir)
+                relative_path = os.path.relpath(path, self.kernel)
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
                     permissions="drwxr-xr-x",
@@ -223,7 +226,7 @@ class Terminal:
         'get the metadata of an entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        return meta[path_to_entry]
+        return meta[path_to_entry.replace("\\","/")]
     
     def cwd_to_relpath(self, path):
         absolute = os.path.normpath(os.path.join(self.current_directory, path))
@@ -295,21 +298,54 @@ class Terminal:
         'pathos bus method to expose the cd command to the bus. changes active directory of the current working system.'
         self.current_directory = os.path.normpath(os.path.join(self.current_directory, path))
     
-    def __pathos_bus_ls(self, path):
+    def __pathos_bus_listdir(self, path):
         'pathos bus method to expose the ls command to the bus.'
         return self.get_directory_contents(path)
+    
+    def __pathos_bus_listdir_long(self, path):
+        'pathos bus method to expose ls -l to the bus'
+        files = self.get_directory_contents(path)
+        result = []
+        for file in files:
+            item_path = os.path.relpath(os.path.join(path, file)).replace("\\","/")
+            metadata = self.get_meta_entry(item_path)
+            permissions = metadata["permissions"]
+            owner = metadata["owner"]
+            group = metadata["group"]
+            size = metadata["size"]
+            last_modified = metadata["last_modified"]
+            name = metadata["name"]
+            entry = [permissions, owner, group, size, last_modified, name]
+            result.append(entry)
+        return result
+
     
     ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
 
+    def tabulate(self, table):
+        tables.tabulate(table)
+
     def change_directory(self, path):
         'scripting method to change directories'
-        target = os.path.normpath(os.path.join(self.current_directory, path))
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "r", self.user, self.groups):
+            if not self.allowed(target, "x", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
-            self.current_directory = target
+            self.__pathos_bus_cd(path)
             return
+        raise ValueError("2: Validation Check Failed")
+    
+    def list_directory(self, path, long=False):
+        'scripting method to list directories'
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        if self.validated(target):
+            if not self.allowed(target, "x", self.user, self.groups):
+                raise ValueError("1: Forbidden Route")
+            elif long:
+                return self.__pathos_bus_listdir_long(path)
+            return self.__pathos_bus_listdir(path)
         raise ValueError("2: Validation Check Failed")
 
 terminal = Terminal()
+terminal.sprint_through()

@@ -12,4 +12,3 @@ def main(self:object, args:list[str]):
         self.change_directory(target)
     except ValueError as e:
         print(f"///ERROR///\n{e}")
-    self.cout("///OPERATION FAILED///")
