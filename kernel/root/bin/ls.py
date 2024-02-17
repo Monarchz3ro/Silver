@@ -31,6 +31,10 @@ def main(self:object, args:list[str]):
         except ValueError as e:
             self.cout(f"///ERROR///\n{e}")
             return
+    
+    for spam,file in enumerate(files):
+        if file == "__pycache__":
+            files.pop(spam)
 
     if "-a" not in args:
         if long:

@@ -10,14 +10,14 @@ import tables
 
 @dataclass
 class Terminal:
-    user:str = "Monarch"
+    user:str = "root"
     groups: str = "root"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
-    current_time:str = "13 Feb 2024"
+    current_time:str = "17 Feb 2024"
     clipout: str = root_dir
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
@@ -72,7 +72,7 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.user.lower()}@path_OS:{self.current_directory[to_strip:].lower()}/ $ "
+            dir_prompt:str = f"{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
             self.cout(dir_prompt,endl="")
             comm = input()
             if not comm:
@@ -115,7 +115,7 @@ class Terminal:
         
     def allowed(self, filepath, action, user, groups):
         'check if the user is allowed to perform the action on the path.'
-        filepath = os.path.relpath(filepath, self.root_dir)
+        filepath = os.path.relpath(filepath, self.kernel).replace("\\", "/")
         if user == "root":
             return 1
         with open(self.filesystem, "r") as meta:
@@ -154,16 +154,24 @@ class Terminal:
         if not os.path.exists(self.filesystem):
             with open(self.filesystem, "w") as file:
                 json.dump({}, file, indent=4)
-
+        self.create_new_meta_entry(
+                path_to_entry="root",
+                permissions="drwxr-xr-x",
+                owner="root",
+                group="root",
+                size=0,
+                last_modified=self.current_time,
+                name="root"
+            )
         for filepath, dirs, files in os.walk(self.root_dir):
             for file in files:
                 fullpath = os.path.join(filepath, file) # get the full path of the file
                 relative_path = os.path.relpath(fullpath, self.kernel) # get the relative path of the file
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
-                    permissions="drwxr-xr-x",
-                    owner="root",
-                    group="root",
+                    permissions="drwxr-x--x",
+                    owner=self.user,
+                    group=self.groups,
                     size=os.path.getsize(fullpath),
                     last_modified=self.current_time,
                     name=file
@@ -175,13 +183,33 @@ class Terminal:
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
                     permissions="drwxr-xr-x",
-                    owner="root",
-                    group="root",
+                    owner=self.user,
+                    group=self.groups,
                     size=0,
                     last_modified=self.current_time,
                     name=dir
                     )
                 
+    def detect_new_dirs(self):
+        'detect new directories and add them to the filesystem json file.'
+        with open(self.filesystem, "r") as file:
+            meta = json.load(file)
+        for filepath, dirs, _ in os.walk(self.root_dir):
+            for dir in dirs:
+                path = os.path.join(filepath, dir)
+                relative_path = os.path.relpath(path, self.kernel).replace("\\", "/")
+                if relative_path not in meta:
+                    print(f"New directory detected: {relative_path}")
+                    self.create_new_meta_entry(
+                        path_to_entry=relative_path.replace("\\", "/"),
+                        permissions="drwxr-xr-x",
+                        owner=self.user,
+                        group=self.groups,
+                        size=0,
+                        last_modified=self.current_time,
+                        name=dir
+                        )
+
     def create_new_meta_entry(self, path_to_entry, permissions, owner, group, size, last_modified, name):
         'create a new entry in the filesystem json file. the file must not exist before calling this method.'
         with open(self.filesystem, "r") as file:
@@ -227,12 +255,6 @@ class Terminal:
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         return meta[path_to_entry.replace("\\","/")]
-    
-    def cwd_to_relpath(self, path):
-        absolute = os.path.normpath(os.path.join(self.current_directory, path))
-        print("absolute", absolute)
-        pathos_format = absolute[len(self.root_dir):].replace("\\", "/")
-        return pathos_format
 
     ### end of kernel methods - system methods start here
 
@@ -318,7 +340,14 @@ class Terminal:
             entry = [permissions, owner, group, size, last_modified, name]
             result.append(entry)
         return result
-
+    
+    def __pathos_bus_mkdir(self, path):
+        'pathos bus method to expose the mkdir command to the bus.'
+        os.mkdir(os.path.join(self.root_dir, path))
+    
+    def __pathos_bus_mkdir_p(self, path):
+        'pathos bus method to expose the mkdir -p command to the bus.'
+        os.makedirs(os.path.join(self.root_dir, path))
     
     ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
@@ -346,6 +375,22 @@ class Terminal:
                 return self.__pathos_bus_listdir_long(path)
             return self.__pathos_bus_listdir(path)
         raise ValueError("2: Validation Check Failed")
+    
+    def make_directory(self, path, p=False):
+        'scripting method to make directories'
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        parent_to_target = os.path.dirname(target)
+        if self.legal(target):
+            if not self.allowed(parent_to_target, "w", self.user, self.groups):
+                raise ValueError("1: Forbidden Route")
+            if p:
+                self.__pathos_bus_mkdir_p(path) 
+            else:
+                self.__pathos_bus_mkdir(path)
+            self.detect_new_dirs()
+            return
+        raise ValueError("3: Virtualisation Breakthrough Suppressed")
+
 
 terminal = Terminal()
 terminal.sprint_through()
