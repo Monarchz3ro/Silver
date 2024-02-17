@@ -17,4 +17,3 @@ def main(self:object, args: list[str]):
                 self.make_directory(path, p="-p" in flags)
     except Exception as e:
         print(f"///ERROR///\n{e}")
-    
