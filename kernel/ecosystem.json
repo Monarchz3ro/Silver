@@ -87,14 +87,6 @@
         "last_modified": "17 Feb 2024",
         "name": "boot.bin"
     },
-    "root/test": {
-        "permissions": "drwxr-xr-x",
-        "owner": "root",
-        "group": "root",
-        "size": 0,
-        "last_modified": "17 Feb 2024",
-        "name": "test"
-    },
     "root/bin/cat.py": {
         "permissions": "drwxr-x--x",
         "owner": "root",

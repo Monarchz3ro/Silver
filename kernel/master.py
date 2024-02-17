@@ -27,7 +27,7 @@ class Terminal:
         self.boot_up()
         self.load_commands()
         os.chdir(self.kernel)
-        self.cout(f"Welcome to PathOS, {self.user}!")
+        self.cout(f"PathOS is live and at your disposal.")
         self.initialise()
 
     def boot_up(self):
@@ -200,7 +200,6 @@ class Terminal:
                 path = os.path.join(filepath, dir)
                 relative_path = os.path.relpath(path, self.kernel).replace("\\", "/")
                 if relative_path not in meta:
-                    print(f"New directory detected: {relative_path}")
                     self.create_new_meta_entry(
                         path_to_entry=relative_path.replace("\\", "/"),
                         permissions="drwxr-xr-x",
@@ -377,8 +376,31 @@ class Terminal:
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
     
-    def __pathos_bus_throw_pwd(self):
-        return self.current_directory
+    def __pathos_bus_remove(self, path, r=False):
+        'pathos bus method to expose the rm command to the bus.'
+        path = os.path.relpath(os.path.join(self.root_dir, path), self.kernel).replace("\\","/")
+        if not r:
+            try:
+                os.remove(os.path.join(self.kernel,path))
+                self.delete_meta_entry(path)
+            except Exception as e:
+                self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
+        else: # (if r)
+            with open(self.filesystem, "r") as file:
+                memory_dump = json.load(file)
+            try:
+                for filepath, drs, files in os.walk(os.path.join(self.root_dir, path)):
+                    for file in files:
+                        self.delete_meta_entry(os.path.relpath(os.path.join(filepath, file), self.kernel).replace("\\","/"))
+                    for dr in drs:
+                        self.delete_meta_entry(os.path.relpath(os.path.join(filepath, dir), self.kernel).replace("\\","/"))
+                shutil.rmtree(os.path.join(self.kernel,path))
+                self.delete_meta_entry(path)
+            except Exception as e:
+                self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
+                with open(self.filesystem, "w") as file:
+                    json.dump(memory_dump, file, indent=4)
+
 
     ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
@@ -437,7 +459,7 @@ class Terminal:
         'scripting method to write to a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if not self.checkxistence(target):
-            print("file does not exist. A new one shall be created.")
+            print("A new one shall be created.")
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -495,6 +517,16 @@ class Terminal:
     
     def ret_basename(self, path):
         return os.path.basename(path)
+    
+    def remove(self, path, r=False):
+        'scripting method to remove a file'
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        if self.validated(target):
+            if not self.allowed(target, "w", self.user, self.groups):
+                raise ValueError("1: Forbidden Route")
+            self.__pathos_bus_remove(path, r)
+            return
+        raise ValueError("2: Validation Check Failed")
 
 
 terminal = Terminal()

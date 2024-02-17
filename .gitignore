@@ -5,3 +5,6 @@ kernel/root/bin/__pycache__/ls.cpython-310.pyc
 kernel/root/bin/__pycache__/mkdir.cpython-310.pyc
 kernel/root/bin/__pycache__/cat.cpython-310.pyc
 kernel/root/bin/__pycache__/pwd.cpython-310.pyc
+kernel/root/bin/__pycache__/exit.cpython-310.pyc
+kernel/root/bin/__pycache__/logout.cpython-310.pyc
+kernel/root/bin/__pycache__/rm.cpython-310.pyc
