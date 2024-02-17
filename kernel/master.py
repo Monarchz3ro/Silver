@@ -19,7 +19,7 @@ class Terminal:
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
     current_time:str = "17 Feb 2024"
-    clipout: str = root_dir
+    clipout: str = root_dir.replace("\\", "/")
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
 
@@ -106,7 +106,7 @@ class Terminal:
         need to point to an existing path, just check if it's valid."""
         ret = os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/") == self.root_dir
         if not ret:
-            self.cout(f"///SECURITY ERROR///\nwall.quad detected an attempt to escape root.")
+            self.cout(f"///SECURITY ERROR///\n3: Virtualisation Breakthrough Suppressed.")
         return ret
 
     def validated(self, filepath=str):
@@ -147,7 +147,7 @@ class Terminal:
                     return 1
         else:
             # If the path does not exist, reject request
-            return 0  # returning 0 instead of False because i'm too used to return 0 from c++)
+            return 0  # returning 0 instead of False because i'm too used to return 0 from c++
         return 0
         
     def sprint_through(self):
@@ -376,6 +376,9 @@ class Terminal:
         meta[os.path.relpath(path_to_entry,self.kernel).replace("\\","/")] = data
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
+    
+    def __pathos_bus_throw_pwd(self):
+        return self.current_directory
 
     ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
@@ -484,6 +487,14 @@ class Terminal:
                 raise ValueError("1: Forbidden Route")
             return self.get_file_contents(path)
         raise ValueError("2: Validation Check Failed")
+    
+    def ret_pwd(self):
+        cwd = self.current_directory
+        clip = len(self.clipout)
+        return cwd[clip:].replace("\\","/")
+    
+    def ret_basename(self, path):
+        return os.path.basename(path)
 
 
 terminal = Terminal()

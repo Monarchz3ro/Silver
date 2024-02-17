@@ -4,3 +4,4 @@ kernel/__pycache__/tables.cpython-310.pyc
 kernel/root/bin/__pycache__/ls.cpython-310.pyc
 kernel/root/bin/__pycache__/mkdir.cpython-310.pyc
 kernel/root/bin/__pycache__/cat.cpython-310.pyc
+kernel/root/bin/__pycache__/pwd.cpython-310.pyc
