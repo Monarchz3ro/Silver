@@ -8,6 +8,8 @@ import tables
 
 ######## refactored form of the original code ---version 0.0.2 ########
 
+os.system('clear')
+
 @dataclass
 class Terminal:
     user:str = "root"
@@ -565,3 +567,4 @@ class Terminal:
     
     
 terminal = Terminal()
+
