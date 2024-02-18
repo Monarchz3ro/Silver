@@ -102,5 +102,61 @@
         "size": 1596,
         "last_modified": "17 Feb 2024",
         "name": "cat.cpython-310.pyc"
+    },
+    "root/bin/echo.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "echo.py"
+    },
+    "root/bin/touch.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "touch.py"
+    },
+    "root/bin/whoami.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "whoami.py"
+    },
+    "root/bin/exit.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "exit.py"
+    },
+    "root/bin/logout.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "logout.py"
+    },
+    "root/bin/pwd.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "pwd.py"
+    },
+    "root/bin/rm.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "rm.py"
     }
 }

@@ -234,7 +234,7 @@ class Terminal:
         'update an attribute of an existing entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        meta[os.path.relpath(self.kernel,path_to_entry)][attribute] = new_value
+        meta[os.path.relpath(path_to_entry,self.kernel).replace("\\","/")][attribute] = new_value
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
@@ -383,6 +383,7 @@ class Terminal:
             try:
                 os.remove(os.path.join(self.kernel,path))
                 self.delete_meta_entry(path)
+                self.cout(f"---SUCCESS---\n{os.path.basename(path)} removed.")
             except Exception as e:
                 self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
         else: # (if r)
@@ -395,6 +396,7 @@ class Terminal:
                     for dr in drs:
                         self.delete_meta_entry(os.path.relpath(os.path.join(filepath, dir), self.kernel).replace("\\","/"))
                 shutil.rmtree(os.path.join(self.kernel,path))
+                self.cout(f"---SUCCESS---\n{os.path.basename(path)} removed.")
                 self.delete_meta_entry(path)
             except Exception as e:
                 self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
@@ -511,11 +513,13 @@ class Terminal:
         raise ValueError("2: Validation Check Failed")
     
     def ret_pwd(self):
+        'scripting method to return the current working directory'
         cwd = self.current_directory
         clip = len(self.clipout)
         return cwd[clip:].replace("\\","/")
     
     def ret_basename(self, path):
+        'scripting method to return the basename of a path'
         return os.path.basename(path)
     
     def remove(self, path, r=False):
@@ -527,6 +531,37 @@ class Terminal:
             self.__pathos_bus_remove(path, r)
             return
         raise ValueError("2: Validation Check Failed")
-
-
+    
+    def touch(self, path):
+        'scripting method to create a new file'
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        if not self.checkxistence(target):
+            parent_to_target = os.path.dirname(target)
+            if not self.allowed(parent_to_target, "w", self.user, self.groups):
+                raise ValueError("1: Forbidden Route")
+            elif not self.legal(target):
+                raise ValueError("3: Virtualisation Breakthrough Suppressed")
+            data = {
+                "permissions":f"-{self.default_perms}",
+                "owner":self.user,
+                "group":self.groups,
+                "size":0,
+                "last_modified":self.current_time,
+                "name": os.path.basename(target)
+                }
+            self.cout("It shall be created.")
+            with open(os.path.join(self.current_directory, path), "w") as file:
+                file.write("")
+            self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
+            return
+        else:
+            self.update_meta_entry(target, "last_modified", self.current_time)
+            self.cout(f"{os.path.basename(target)} touched.")
+            return
+    
+    def whoami(self):
+        'scripting method to return the current user'
+        return self.user
+    
+    
 terminal = Terminal()
