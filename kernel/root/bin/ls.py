@@ -10,9 +10,7 @@ def main(self: object, args: list[str]):
             flags += [f'-{i}' for i in arg[1:]] if len(arg) > 2 else [arg]
         else:
             paths.append(arg)
-    long = False
-    if "-l" in flags:
-        long = True
+    long = "-l" in flags
 
     if "--h" in flags:
         self.cout("///USAGE///\nls <directory_path> <-a> <-l>\nechoes contents of the directory specified.")
