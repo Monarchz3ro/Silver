@@ -3,7 +3,6 @@ quick and dirty tabulator.
 it'll do.
 '''
 def tabulate(table: tuple[list[str]], delim:str="|"):
-    number_rows = len(table)
     number_columns = len(table[0])
     column_max = []
     for _ in range(number_columns):
@@ -28,7 +27,7 @@ def tabulate(table: tuple[list[str]], delim:str="|"):
             offset = column_max[irow] - len(str(item)) 
             ret[icolumn][irow] = str(ret[icolumn][irow]) + (" "*offset)
     
-    delim=f" {delim} "
+    delim = f" {delim} "
 
     #throw output
     for row in ret:
