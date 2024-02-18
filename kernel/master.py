@@ -73,7 +73,7 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
+            dir_prompt:str = f"\033[1m{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ \033[0m"
             self.cout(dir_prompt,endl="")
             comm = input()
             if not comm:
