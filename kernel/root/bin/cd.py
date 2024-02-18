@@ -8,7 +8,11 @@ def main(self:object, args:list[str]):
         self.cout("///USAGE///\ncd dir")
         return
     target = os.path.normpath(os.path.join(self.current_directory, args[0]))
-    try:
-        self.change_directory(target)
-    except ValueError as e:
-        print(f"///ERROR///\n{e}")
+    is_a_dir = os.path.isdir(target)
+    if not is_a_dir:
+        print(f"///ERROR///\n'{target}' isn't a directory")
+    else:
+        try:
+            self.change_directory(target)
+        except ValueError as e:
+            print(f"///ERROR///\n{e}")
