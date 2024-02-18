@@ -13,6 +13,16 @@ def main(self:object, args:list[str]):
     for spam,eggs in enumerate(args):
         if eggs in [">", ">>"]:
             writes.append(spam)
+            user_input = []
+            # get user input until there's a line break
+            print('---USER INPUT---')
+            while True:
+                try:
+                    line = input()
+                except EOFError:
+                    break
+                user_input.append(line)
+            print('---USER INPUT---')
         else:
             paths.append(eggs)
     
@@ -36,28 +46,34 @@ def main(self:object, args:list[str]):
         
         if ">" in args:
             concat = args[:writes[0]] # get the files to concatenate
-            content = ""
+            content = user_input
+            count = 0
             try:
                 for path in concat:
                     try:
                         content += self.read_file(path)
                     except Exception as e:
                         self.cout(f"///ERROR///\n{e}")
-                self.write_file(args[writes[0] + 1], content)
+                while count < len(content):
+                    self.append_file(args[writes[0] + 1], content[count] + "\n")
+                    count += 1
                 print("---SUCCESS---\nFile written successfully.")
             except ValueError as e:
                 self.cout(f"///ERROR///\n{e}")
 
         elif ">>" in args:
             concat = args[:writes[0]]
-            content = ""
+            content = user_input
+            count = 0
             try:
                 for path in concat:
                     try:
                         content += self.read_file(path)
                     except ValueError as e:
                         self.cout(f"///ERROR///\n{e}")
-                self.append_file(args[writes[0] + 1], content)
+                while count < len(content):
+                    self.append_file(args[writes[0] + 1], content[count] + "\n")
+                    count += 1
                 print("---SUCCESS---\nFile appended successfully.")
             except ValueError as e:
                 self.cout(f"///ERROR///\n{e}")
