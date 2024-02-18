@@ -1,26 +1,28 @@
-import shutil, json, os
 import importlib.util
-from dataclasses import dataclass, field
-import time
+import json
 import os
+import shutil
+from dataclasses import dataclass, field
+
 import syscheck
 import tables
+
 
 ######## refactored form of the original code ---version 0.0.2 ########
 
 @dataclass
 class Terminal:
-    user:str = "root"
+    user: str = "root"
     groups: str = "root"
-    kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
+    kernel: str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     default_perms: str = "rwxr-xr-x"
-    current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
+    current_directory = root_dir = os.path.join(kernel, "root").replace("\\", "/")
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
-    registry:str = "registry.json"
-    filesystem:str = "ecosystem.json"
-    current_time:str = "17 Feb 2024"
+    registry: str = "registry.json"
+    filesystem: str = "ecosystem.json"
+    current_time: str = "17 Feb 2024"
     clipout: str = root_dir.replace("\\", "/")
-    env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
+    env_path_var: str = (os.path.join(root_dir, "bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
 
     def __post_init__(self):
@@ -40,7 +42,8 @@ class Terminal:
                 else:
                     print("---BOOT SUCCESS---")
         else:
-            self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
+            self.cout(
+                "///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
             exit(1)
 
     def load_commands(self):
@@ -65,16 +68,16 @@ class Terminal:
             to_execute(self, args)
         else:
             print(f'Silver: command "{command}" not found.')
-    
+
     def cout(self, message, endl="\n"):
-        print(message.replace("\\","/"), end=endl)
+        print(message.replace("\\", "/"), end=endl)
 
     def initialise(self):
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
-            self.cout(dir_prompt,endl="")
+            dir_prompt: str = f"{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
+            self.cout(dir_prompt, endl="")
             comm = input()
             if not comm:
                 continue
@@ -89,7 +92,7 @@ class Terminal:
         'get the registry of the system.'
         with open(self.registry, "r") as file:
             return json.load(file)
-        
+
     def get_users(self):
         'get the users of the system.'
         return self.get_registry()["users"]
@@ -100,11 +103,11 @@ class Terminal:
         if not ret:
             self.cout(f"Path given does not exist.")
         return ret
-    
+
     def legal(self, filepath=str):
         """Clamp to root. accepts a relpath string. Check if the specified path is within the root_dir. the path doesn't
         need to point to an existing path, just check if it's valid."""
-        ret = os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\","/") == self.root_dir
+        ret = os.path.commonpath([os.path.abspath(filepath), self.root_dir]).replace("\\", "/") == self.root_dir
         if not ret:
             self.cout(f"///SECURITY ERROR///\n3: Virtualisation Breakthrough Suppressed.")
         return ret
@@ -113,7 +116,7 @@ class Terminal:
         """check if the specified exists AND is within the root_dir."""
         ret = self.checkxistence(filepath) and self.legal(filepath)
         return ret
-        
+
     def allowed(self, filepath, action, user, groups):
         'check if the user is allowed to perform the action on the path.'
         filepath = os.path.relpath(filepath, self.kernel).replace("\\", "/")
@@ -128,7 +131,7 @@ class Terminal:
             groups = data[filepath]["group"]
             permissions = data[filepath]["permissions"]
 
-            #get the perms of the file
+            # get the perms of the file
             with open(self.registry, "r") as file:
                 reg_object = json.load(file)
                 grps = reg_object["groups"]
@@ -149,25 +152,25 @@ class Terminal:
             # If the path does not exist, reject request
             return 0  # returning 0 instead of False because i'm too used to return 0 from c++
         return 0
-        
+
     def sprint_through(self):
         "standalone tool to build the ecosystem.json file completely, assuming it doesn't exist in the first place or is empty."
         if not os.path.exists(self.filesystem):
             with open(self.filesystem, "w") as file:
                 json.dump({}, file, indent=4)
         self.create_new_meta_entry(
-                path_to_entry="root",
-                permissions="drwxr-xr-x",
-                owner="root",
-                group="root",
-                size=0,
-                last_modified=self.current_time,
-                name="root"
-            )
+            path_to_entry="root",
+            permissions="drwxr-xr-x",
+            owner="root",
+            group="root",
+            size=0,
+            last_modified=self.current_time,
+            name="root"
+        )
         for filepath, dirs, files in os.walk(self.root_dir):
             for file in files:
-                fullpath = os.path.join(filepath, file) # get the full path of the file
-                relative_path = os.path.relpath(fullpath, self.kernel) # get the relative path of the file
+                fullpath = os.path.join(filepath, file)  # get the full path of the file
+                relative_path = os.path.relpath(fullpath, self.kernel)  # get the relative path of the file
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
                     permissions="drwxr-x--x",
@@ -176,8 +179,8 @@ class Terminal:
                     size=os.path.getsize(fullpath),
                     last_modified=self.current_time,
                     name=file
-                    )
-    
+                )
+
             for dir in dirs:
                 path = os.path.join(filepath, dir)
                 relative_path = os.path.relpath(path, self.kernel)
@@ -189,8 +192,8 @@ class Terminal:
                     size=0,
                     last_modified=self.current_time,
                     name=dir
-                    )
-                
+                )
+
     def detect_new_dirs(self):
         'detect new directories and add them to the filesystem json file.'
         with open(self.filesystem, "r") as file:
@@ -208,9 +211,9 @@ class Terminal:
                         size=0,
                         last_modified=self.current_time,
                         name=dir
-                        )
+                    )
 
-    def create_new_meta_entry(self, path_to_entry, permissions, owner,group,size, last_modified, name):
+    def create_new_meta_entry(self, path_to_entry, permissions, owner, group, size, last_modified, name):
         'create a new entry in the filesystem json file. the file must not exist before calling this method.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
@@ -226,7 +229,7 @@ class Terminal:
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
-    def get_size(self, content:str):
+    def get_size(self, content: str):
         'returns size'
         return len(content.encode('utf-8'))
 
@@ -234,7 +237,7 @@ class Terminal:
         'update an attribute of an existing entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        meta[os.path.relpath(path_to_entry,self.kernel).replace("\\","/")][attribute] = new_value
+        meta[os.path.relpath(path_to_entry, self.kernel).replace("\\", "/")][attribute] = new_value
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
@@ -253,52 +256,52 @@ class Terminal:
         meta[new_path] = meta.pop(old_path)
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
-    
+
     def get_meta_entry(self, path_to_entry):
         'get the metadata of an entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        return meta[path_to_entry.replace("\\","/")]
+        return meta[path_to_entry.replace("\\", "/")]
 
     ### end of kernel methods - system methods start here
 
-    def create_new_file(self, path_to_file, data:dict=None, contents=""):
+    def create_new_file(self, path_to_file, data: dict = None, contents=""):
         'create a new file. accepts a relpath string, a parsed dict with metadata and a string of contents.'
         print(os.path.join(self.root_dir, path_to_file))
         with open(os.path.join(self.root_dir, path_to_file), "w") as file:
             file.write(contents)
         self.create_new_meta_entry(
-                                    data["path_to_entry"],
-                                    data["permissions"],
-                                    data["owner"],
-                                    data["group"],
-                                    data["size"], 
-                                    data["last_modified"],
-                                    data["name"]
-                                   )
-    
-    def create_new_directory(self, path_to_directory, data:dict=None):
+            data["path_to_entry"],
+            data["permissions"],
+            data["owner"],
+            data["group"],
+            data["size"],
+            data["last_modified"],
+            data["name"]
+        )
+
+    def create_new_directory(self, path_to_directory, data: dict = None):
         'create a new directory. accepts a relpath string and a parsed dict containing metadata.'
         os.makedirs(os.path.join(self.root_dir, path_to_directory))
         self.create_new_meta_entry(*data)
-    
+
     def delete_file(self, path_to_file):
         'delete a file. accepts a relpath string.'
         os.remove(os.path.join(self.root_dir, path_to_file))
         self.delete_meta_entry(path_to_file)
-    
+
     def delete_directory(self, path_to_directory):
         'delete a directory fully, ignoring if it had anything in it. accepts a relpath string.'
         shutil.rmtree(os.path.join(self.root_dir, path_to_directory))
         self.delete_meta_entry(path_to_directory)
-    
+
     def general_move(self, path_to_file, new_path):
         'moves anything. accepts two relpath strings.'
         shutil.move(os.path.join(self.root_dir, path_to_file), os.path.join(self.root_dir, new_path))
         self.update_path_in_meta(path_to_file, new_path)
         self.update_meta_entry(new_path, "last_modified", self.current_time)
         self.update_meta_entry(new_path, "name", os.path.basename(new_path))
-    
+
     def general_copy(self, path_to_file, new_path):
         'copies anything. accepts two relpath strings.'
         shutil.copy2(os.path.join(self.root_dir, path_to_file), os.path.join(self.root_dir, new_path))
@@ -310,29 +313,29 @@ class Terminal:
             size=self.get_meta_entry(path_to_file)["size"],
             last_modified=self.current_time,
             name=os.path.basename(new_path)
-            )
-    
+        )
+
     def get_file_contents(self, path_to_file):
         'get the contents of a file. accepts a relpath string.'
-        with open(os.path.join(self.current_directory, path_to_file).replace("\\","/"), "r") as file:
+        with open(os.path.join(self.current_directory, path_to_file).replace("\\", "/"), "r") as file:
             return file.read()
-    
+
     ## methods that expose the kernel to the bus
-    
+
     def __pathos_bus_cd(self, path):
         'pathos bus method to expose the cd command to the bus. changes active directory of the current working system.'
         self.current_directory = os.path.normpath(os.path.join(self.current_directory, path))
-    
+
     def __pathos_bus_listdir(self, path):
         'pathos bus method to expose the ls command to the bus.'
         return os.listdir(os.path.join(self.root_dir, path))
-    
+
     def __pathos_bus_listdir_long(self, path):
         'pathos bus method to expose ls -l to the bus'
         files = os.listdir(os.path.join(self.root_dir, path))
         result = []
         for file in files:
-            item_path = os.path.relpath(os.path.join(path, file)).replace("\\","/")
+            item_path = os.path.relpath(os.path.join(path, file)).replace("\\", "/")
             metadata = self.get_meta_entry(item_path)
             permissions = metadata["permissions"]
             owner = metadata["owner"]
@@ -343,11 +346,11 @@ class Terminal:
             entry = [permissions, owner, group, size, last_modified, name]
             result.append(entry)
         return result
-    
+
     def __pathos_bus_mkdir(self, path):
         'pathos bus method to expose the mkdir command to the bus.'
         os.mkdir(os.path.join(self.root_dir, path))
-    
+
     def __pathos_bus_mkdir_p(self, path):
         'pathos bus method to expose the mkdir -p command to the bus.'
         os.makedirs(os.path.join(self.root_dir, path))
@@ -356,11 +359,11 @@ class Terminal:
         'pathos bus method to expose the ecosystem to the bus.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        meta[os.path.relpath(path_to_entry,self.kernel).replace("\\","/")][attribute] = new_value
+        meta[os.path.relpath(path_to_entry, self.kernel).replace("\\", "/")][attribute] = new_value
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
-    
-    def __pathos_bus_add_meta(self, path_to_entry, permissions, owner, group, size,last_modified):
+
+    def __pathos_bus_add_meta(self, path_to_entry, permissions, owner, group, size, last_modified):
         'pathos bus method to expose the ecosystem to the bus.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
@@ -372,37 +375,38 @@ class Terminal:
             "last_modified": last_modified,
             "name": os.path.basename(path_to_entry)
         }
-        meta[os.path.relpath(path_to_entry,self.kernel).replace("\\","/")] = data
+        meta[os.path.relpath(path_to_entry, self.kernel).replace("\\", "/")] = data
         with open(self.filesystem, "w") as file:
             json.dump(meta, file, indent=4)
-    
+
     def __pathos_bus_remove(self, path, r=False):
         'pathos bus method to expose the rm command to the bus.'
-        path = os.path.relpath(os.path.join(self.root_dir, path), self.kernel).replace("\\","/")
+        path = os.path.relpath(os.path.join(self.root_dir, path), self.kernel).replace("\\", "/")
         if not r:
             try:
-                os.remove(os.path.join(self.kernel,path))
+                os.remove(os.path.join(self.kernel, path))
                 self.delete_meta_entry(path)
                 self.cout(f"---SUCCESS---\n{os.path.basename(path)} removed.")
             except Exception as e:
-                self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
-        else: # (if r)
+                self.cout("///ERROR///\nInvalid input for provided args.\n" + str(e))
+        else:  # (if r)
             with open(self.filesystem, "r") as file:
                 memory_dump = json.load(file)
             try:
                 for filepath, drs, files in os.walk(os.path.join(self.root_dir, path)):
                     for file in files:
-                        self.delete_meta_entry(os.path.relpath(os.path.join(filepath, file), self.kernel).replace("\\","/"))
+                        self.delete_meta_entry(
+                            os.path.relpath(os.path.join(filepath, file), self.kernel).replace("\\", "/"))
                     for dr in drs:
-                        self.delete_meta_entry(os.path.relpath(os.path.join(filepath, dir), self.kernel).replace("\\","/"))
-                shutil.rmtree(os.path.join(self.kernel,path))
+                        self.delete_meta_entry(
+                            os.path.relpath(os.path.join(filepath, dir), self.kernel).replace("\\", "/"))
+                shutil.rmtree(os.path.join(self.kernel, path))
                 self.cout(f"---SUCCESS---\n{os.path.basename(path)} removed.")
                 self.delete_meta_entry(path)
             except Exception as e:
-                self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
+                self.cout("///ERROR///\nInvalid input for provided args.\n" + str(e))
                 with open(self.filesystem, "w") as file:
                     json.dump(memory_dump, file, indent=4)
-
 
     ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
@@ -412,17 +416,17 @@ class Terminal:
 
     def change_directory(self, path):
         'scripting method to change directories'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "x", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_cd(path)
             return
         raise ValueError("2: Validation Check Failed")
-    
+
     def list_directory(self, path, long=False):
         'scripting method to list directories'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "x", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -430,25 +434,25 @@ class Terminal:
                 return self.__pathos_bus_listdir_long(path)
             return self.__pathos_bus_listdir(path)
         raise ValueError("2: Validation Check Failed")
-    
+
     def make_directory(self, path, p=False):
         'scripting method to make directories'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         parent_to_target = os.path.dirname(target)
         if self.legal(target):
             if not self.allowed(parent_to_target, "w", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
             if p:
-                self.__pathos_bus_mkdir_p(path) 
+                self.__pathos_bus_mkdir_p(path)
             else:
                 self.__pathos_bus_mkdir(path)
             self.detect_new_dirs()
             return
         raise ValueError("3: Virtualisation Breakthrough Suppressed")
-    
+
     def print_file(self, path):
         'scripting method to print contents of a file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "r", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -456,10 +460,10 @@ class Terminal:
             self.cout(to_print)
             return
         raise ValueError("2: Validation Check Failed")
-    
+
     def write_file(self, path, contents):
         'scripting method to write to a file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if not self.checkxistence(target):
             print("A new one shall be created.")
             parent_to_target = os.path.dirname(target)
@@ -468,18 +472,19 @@ class Terminal:
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
-                "owner":self.user,
-                "group":self.groups,
-                "size":self.get_size(contents),
-                "last_modified":self.current_time,
+                "permissions": f"-{self.default_perms}",
+                "owner": self.user,
+                "group": self.groups,
+                "size": self.get_size(contents),
+                "last_modified": self.current_time,
                 "name": os.path.basename(target)
-                }
+            }
             with open(os.path.join(self.current_directory, path), "w") as file:
                 file.write(contents)
-            self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
+            self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"],
+                                       data["last_modified"])
             return
-        
+
         elif self.validated(target):
             if not self.allowed(target, "w", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -489,10 +494,10 @@ class Terminal:
             self.__pathos_bus_update_meta(target, "size", self.get_size(contents))
             return
         raise ValueError("2: Validation Check Failed")
-    
+
     def append_file(self, path, contents):
         'scripting method to append to a file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "w", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -505,36 +510,36 @@ class Terminal:
 
     def read_file(self, path):
         'scripting method to read a file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "r", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
             return self.get_file_contents(path)
         raise ValueError("2: Validation Check Failed")
-    
+
     def ret_pwd(self):
         'scripting method to return the current working directory'
         cwd = self.current_directory
         clip = len(self.clipout)
-        return cwd[clip:].replace("\\","/")
-    
+        return cwd[clip:].replace("\\", "/")
+
     def ret_basename(self, path):
         'scripting method to return the basename of a path'
         return os.path.basename(path)
-    
+
     def remove(self, path, r=False):
         'scripting method to remove a file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if self.validated(target):
             if not self.allowed(target, "w", self.user, self.groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_remove(path, r)
             return
         raise ValueError("2: Validation Check Failed")
-    
+
     def touch(self, path):
         'scripting method to create a new file'
-        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\", "/")
         if not self.checkxistence(target):
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.user, self.groups):
@@ -542,26 +547,27 @@ class Terminal:
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
-                "owner":self.user,
-                "group":self.groups,
-                "size":0,
-                "last_modified":self.current_time,
+                "permissions": f"-{self.default_perms}",
+                "owner": self.user,
+                "group": self.groups,
+                "size": 0,
+                "last_modified": self.current_time,
                 "name": os.path.basename(target)
-                }
+            }
             self.cout("It shall be created.")
             with open(os.path.join(self.current_directory, path), "w") as file:
                 file.write("")
-            self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
+            self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"],
+                                       data["last_modified"])
             return
         else:
             self.update_meta_entry(target, "last_modified", self.current_time)
             self.cout(f"{os.path.basename(target)} touched.")
             return
-    
+
     def whoami(self):
         'scripting method to return the current user'
         return self.user
-    
-    
+
+
 terminal = Terminal()

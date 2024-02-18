@@ -2,7 +2,7 @@
 # Usage: whoami
 # echoes the effective userid to the console.
 
-def main(self:object, args: list[str]):
+def main(self: object, args: list[str]):
     if len(args) == 0 or "--h" in args:
         print("///USAGE///\nwhoami\nechoes the effective userid to the console.")
         return

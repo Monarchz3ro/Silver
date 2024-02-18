@@ -1,162 +1,162 @@
 {
-    "root": {
-        "permissions": "drwxr-xr-x",
-        "owner": "root",
-        "group": "root",
-        "size": 0,
-        "last_modified": "17 Feb 2024",
-        "name": "root"
-    },
-    "root/bin": {
-        "permissions": "drwxr-xr-x",
-        "owner": "root",
-        "group": "root",
-        "size": 0,
-        "last_modified": "17 Feb 2024",
-        "name": "bin"
-    },
-    "root/boot": {
-        "permissions": "drwxr-xr-x",
-        "owner": "root",
-        "group": "root",
-        "size": 0,
-        "last_modified": "17 Feb 2024",
-        "name": "boot"
-    },
-    "root/bin/cd.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 467,
-        "last_modified": "17 Feb 2024",
-        "name": "cd.py"
-    },
-    "root/bin/ls.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "ls.py"
-    },
-    "root/bin/mkdir.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 676,
-        "last_modified": "17 Feb 2024",
-        "name": "mkdir.py"
-    },
-    "root/bin/__pycache__": {
-        "permissions": "drwxr-xr-x",
-        "owner": "root",
-        "group": "root",
-        "size": 0,
-        "last_modified": "17 Feb 2024",
-        "name": "__pycache__"
-    },
-    "root/bin/__pycache__/cd.cpython-310.pyc": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 629,
-        "last_modified": "17 Feb 2024",
-        "name": "cd.cpython-310.pyc"
-    },
-    "root/bin/__pycache__/ls.cpython-310.pyc": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1206,
-        "last_modified": "17 Feb 2024",
-        "name": "ls.cpython-310.pyc"
-    },
-    "root/bin/__pycache__/mkdir.cpython-310.pyc": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 744,
-        "last_modified": "17 Feb 2024",
-        "name": "mkdir.cpython-310.pyc"
-    },
-    "root/boot/boot.bin": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 13922,
-        "last_modified": "17 Feb 2024",
-        "name": "boot.bin"
-    },
-    "root/bin/cat.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 2725,
-        "last_modified": "17 Feb 2024",
-        "name": "cat.py"
-    },
-    "root/bin/__pycache__/cat.cpython-310.pyc": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1596,
-        "last_modified": "17 Feb 2024",
-        "name": "cat.cpython-310.pyc"
-    },
-    "root/bin/echo.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "echo.py"
-    },
-    "root/bin/touch.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "touch.py"
-    },
-    "root/bin/whoami.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "whoami.py"
-    },
-    "root/bin/exit.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "exit.py"
-    },
-    "root/bin/logout.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "logout.py"
-    },
-    "root/bin/pwd.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "pwd.py"
-    },
-    "root/bin/rm.py": {
-        "permissions": "-rwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "rm.py"
-    }
+  "root": {
+    "permissions": "drwxr-xr-x",
+    "owner": "root",
+    "group": "root",
+    "size": 0,
+    "last_modified": "17 Feb 2024",
+    "name": "root"
+  },
+  "root/bin": {
+    "permissions": "drwxr-xr-x",
+    "owner": "root",
+    "group": "root",
+    "size": 0,
+    "last_modified": "17 Feb 2024",
+    "name": "bin"
+  },
+  "root/boot": {
+    "permissions": "drwxr-xr-x",
+    "owner": "root",
+    "group": "root",
+    "size": 0,
+    "last_modified": "17 Feb 2024",
+    "name": "boot"
+  },
+  "root/bin/cd.py": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 467,
+    "last_modified": "17 Feb 2024",
+    "name": "cd.py"
+  },
+  "root/bin/ls.py": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "ls.py"
+  },
+  "root/bin/mkdir.py": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 676,
+    "last_modified": "17 Feb 2024",
+    "name": "mkdir.py"
+  },
+  "root/bin/__pycache__": {
+    "permissions": "drwxr-xr-x",
+    "owner": "root",
+    "group": "root",
+    "size": 0,
+    "last_modified": "17 Feb 2024",
+    "name": "__pycache__"
+  },
+  "root/bin/__pycache__/cd.cpython-310.pyc": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 629,
+    "last_modified": "17 Feb 2024",
+    "name": "cd.cpython-310.pyc"
+  },
+  "root/bin/__pycache__/ls.cpython-310.pyc": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1206,
+    "last_modified": "17 Feb 2024",
+    "name": "ls.cpython-310.pyc"
+  },
+  "root/bin/__pycache__/mkdir.cpython-310.pyc": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 744,
+    "last_modified": "17 Feb 2024",
+    "name": "mkdir.cpython-310.pyc"
+  },
+  "root/boot/boot.bin": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 13922,
+    "last_modified": "17 Feb 2024",
+    "name": "boot.bin"
+  },
+  "root/bin/cat.py": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 2725,
+    "last_modified": "17 Feb 2024",
+    "name": "cat.py"
+  },
+  "root/bin/__pycache__/cat.cpython-310.pyc": {
+    "permissions": "drwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1596,
+    "last_modified": "17 Feb 2024",
+    "name": "cat.cpython-310.pyc"
+  },
+  "root/bin/echo.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "echo.py"
+  },
+  "root/bin/touch.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "touch.py"
+  },
+  "root/bin/whoami.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "whoami.py"
+  },
+  "root/bin/exit.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "exit.py"
+  },
+  "root/bin/logout.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "logout.py"
+  },
+  "root/bin/pwd.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "pwd.py"
+  },
+  "root/bin/rm.py": {
+    "permissions": "-rwxr-x--x",
+    "owner": "root",
+    "group": "root",
+    "size": 1546,
+    "last_modified": "17 Feb 2024",
+    "name": "rm.py"
+  }
 }

@@ -2,11 +2,13 @@
 # Usage: mkdir [-p] dir1 dir2 dir3...
 # Creates new, empty directories with the provided arguments.
 
-def main(self:object, args: list[str]):
+def main(self: object, args: list[str]):
     if len(args) == 0 or "--h" in args:
-        print("///USAGE///\nmkdir <-p> (dir) <dir2> <dir3>...\nCreates new, empty directories with the provided arguments.")
+        print(
+            "///USAGE///\nmkdir <-p> (dir) <dir2> <dir3>...\nCreates new, empty directories with the provided arguments.")
         return
-    flags = []; paths = []
+    flags = [];
+    paths = []
     for arg in args:
         if arg.startswith("-"):
             flags.append(arg)
@@ -14,6 +16,6 @@ def main(self:object, args: list[str]):
             paths.append(arg)
     try:
         for path in paths:
-                self.make_directory(path, p="-p" in flags)
+            self.make_directory(path, p="-p" in flags)
     except Exception as e:
         print(f"///ERROR///\n{e}")

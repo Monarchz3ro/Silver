@@ -1,9 +1,10 @@
-#to be plugged into the Terminal class
-#cd - change directory
-#syntax: cd [directory] - change to the specified directory
+# to be plugged into the Terminal class
+# cd - change directory
+# syntax: cd [directory] - change to the specified directory
 import os
 
-def main(self:object, args:list[str]):
+
+def main(self: object, args: list[str]):
     if len(args) == 0 or "--h" in args:
         self.cout("///USAGE///\ncd dir")
         return
