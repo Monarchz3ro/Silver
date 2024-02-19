@@ -2,7 +2,7 @@
     "groups": {
         "users": {
             "Monarch": {
-                "password": "cockballs"
+                "password": "ez"
                 },
             "Miriel": {
                 "password": "3thirtyseven7"
@@ -10,8 +10,6 @@
             }
         },
     "root": {
-        "root":{
-            "password": "toor"
-        }
+        "password":"toor"
     }
 }
