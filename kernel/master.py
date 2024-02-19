@@ -107,22 +107,14 @@ class Terminal:
         if user_specified:
             index = args.index("-u")
             target_user = args[index+1]
-            if self.user != "root":
-                if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
-                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-                else:
-                    self.cout("///ERROR///\nAuthentication failed.")
-                    return
-            else:
-                if self.__pass_authenticated(self.__get_root_pass()):
-                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-                else:
-                    self.cout("///ERROR///\nAuthentication failed.")
-                    return
+            target_group = self.__pathos_bus_locate_user_in_group(target_user)
             args.pop(index+1)
             args.pop(index)
-            target_group = self.__pathos_bus_locate_user_in_group(target_user)
-            
+            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
         
         elif become_root:
             if self.user == "root":
@@ -155,6 +147,7 @@ class Terminal:
             args.pop(index)
         
         self.__pathos_bus_shell(target_user, target_group, suppress=True)
+
         if args:
             command = args[0]
             args = args[1:]
