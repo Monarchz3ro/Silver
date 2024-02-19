@@ -284,20 +284,24 @@ class Terminal:
     
     def delete_file(self, path_to_file):
         'delete a file. accepts a relpath string.'
-        os.remove(os.path.join(self.root_dir, path_to_file))
+        os.remove(os.path.join(self.current_directory, path_to_file))
         self.delete_meta_entry(path_to_file)
     
     def delete_directory(self, path_to_directory):
         'delete a directory fully, ignoring if it had anything in it. accepts a relpath string.'
-        shutil.rmtree(os.path.join(self.root_dir, path_to_directory))
+        shutil.rmtree(os.path.join(self.current_directory, path_to_directory))
         self.delete_meta_entry(path_to_directory)
     
-    def general_move(self, path_to_file, new_path):
+    def general_move(self, path_to_file, new_path, flags=None):
         'moves anything. accepts two relpath strings.'
-        shutil.move(os.path.join(self.root_dir, path_to_file), os.path.join(self.root_dir, new_path))
-        self.update_path_in_meta(path_to_file, new_path)
-        self.update_meta_entry(new_path, "last_modified", self.current_time)
-        self.update_meta_entry(new_path, "name", os.path.basename(new_path))
+        if self.validated(os.path.join(self.current_directory, path_to_file)):
+            relative_path_to_file = os.path.join(self.current_directory, path_to_file).split('kernel/', 1)[1]
+            relative_new_path = os.path.join(self.current_directory, new_path).split('kernel/', 1)[1]
+            print(relative_path_to_file, relative_new_path)
+            self.update_path_in_meta(relative_path_to_file, relative_new_path)
+            self.update_meta_entry(relative_new_path, "last_modified", self.current_time)
+            self.update_meta_entry(relative_new_path, "name", os.path.basename(relative_new_path))
+            shutil.move(os.path.join(self.current_directory, path_to_file), os.path.join(self.current_directory, new_path))
     
     def general_copy(self, path_to_file, new_path):
         'copies anything. accepts two relpath strings.'
@@ -378,7 +382,7 @@ class Terminal:
     
     def __pathos_bus_remove(self, path, r=False):
         'pathos bus method to expose the rm command to the bus.'
-        path = os.path.relpath(os.path.join(self.root_dir, path), self.kernel).replace("\\","/")
+        path = os.path.relpath(os.path.join(self.current_directory, path), self.kernel).replace("\\","/")
         if not r:
             try:
                 os.remove(os.path.join(self.kernel,path))
@@ -390,7 +394,7 @@ class Terminal:
             with open(self.filesystem, "r") as file:
                 memory_dump = json.load(file)
             try:
-                for filepath, drs, files in os.walk(os.path.join(self.root_dir, path)):
+                for filepath, drs, files in os.walk(os.path.join(self.current_directory, path)):
                     for file in files:
                         self.delete_meta_entry(os.path.relpath(os.path.join(filepath, file), self.kernel).replace("\\","/"))
                     for dr in drs:

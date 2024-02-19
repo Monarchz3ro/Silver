@@ -31,14 +31,6 @@
         "last_modified": "17 Feb 2024",
         "name": "cd.py"
     },
-    "root/bin/ls.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "ls.py"
-    },
     "root/bin/mkdir.py": {
         "permissions": "drwxr-x--x",
         "owner": "root",
@@ -46,6 +38,14 @@
         "size": 676,
         "last_modified": "17 Feb 2024",
         "name": "mkdir.py"
+    },
+    "root/bin/mv.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 676,
+        "last_modified": "17 Feb 2024",
+        "name": "mv.py"
     },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
@@ -158,5 +158,13 @@
         "size": 1546,
         "last_modified": "17 Feb 2024",
         "name": "rm.py"
+    },
+    "root/bin/ls.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "ls.py"
     }
 }
