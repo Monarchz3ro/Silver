@@ -27,7 +27,7 @@ def main(self:object, args:list[str]):
             paths.append(eggs)
     
     # if there are no writes, print the contents of the files
-    if writes == []:
+    if not writes:
         for path in paths:
             try:
                 self.print_file(path.replace("\\", "/"))
