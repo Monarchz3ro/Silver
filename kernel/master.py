@@ -1,7 +1,6 @@
 import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
-import time
 import os
 import syscheck
 import tables
@@ -10,18 +9,19 @@ import tables
 
 @dataclass
 class Terminal:
-    user:str = "root"
-    groups: str = "root"
+    user:str = "Monarch"
+    groups: str = "users"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     default_perms: str = "rwxr-xr-x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
-    current_time:str = "17 Feb 2024"
+    current_time:str = "18 Feb 2024"
     clipout: str = root_dir.replace("\\", "/")
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
+    shells: list = field(default_factory=list)
 
     def __post_init__(self):
         self.boot_up()
@@ -37,8 +37,7 @@ class Terminal:
                 if temp != syscheck.pathos_boot_module:
                     self.cout("///FATAL_CRASH.KERNEL.PANIC///\nBoot file is corrupted. Please reinstall the system.")
                     exit(1)
-                else:
-                    print("---BOOT SUCCESS---")
+                self.cout("---BOOT SUCCESSFUL---")
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
             exit(1)
@@ -81,10 +80,133 @@ class Terminal:
             comslist = comm.split()
             command = comslist[0]
             args = comslist[1:]
+            if command == "sudo":
+                self.__process_sudo(args)
+                continue
+            if command in ["exit","logout","quit"]:
+                if self.shells:
+                    self.__pathos_bus_shell_out()
+                    continue
             self.execute_command(command, args)
 
     ###all of these are kernel methods - required for the system to function properly - do not mess with these
     ###unless you know what you are doing
+            
+    def __process_sudo(self, args):
+        'process the sudo command.'
+        target_user = self.user
+        target_group = self.groups
+        if not args:
+            self.cout("///USAGE/// sudo [command] [args]")
+            return
+        
+        user_specified = "-u" in args
+        retain_shell = "-s" in args
+        become_root = "-i" in args
+
+        if user_specified:
+            index = args.index("-u")
+            target_user = args[index+1]
+            target_group = self.__pathos_bus_locate_user_in_group(target_user)
+            args.pop(index+1)
+            args.pop(index)
+            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+        
+        elif become_root:
+            if self.user == "root":
+                self.cout("///ERROR///\nYou are already the system administrator.")
+                return
+            if self.__pass_authenticated(self.__get_root_pass()):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+            target_user = "root"
+            target_group = "root"
+            index = args.index("-i")
+            args.pop(index)
+
+        else:
+            if self.user == "root":
+                self.cout("///ERROR///\nYou are already the system administrator.")
+                return
+            if self.__pass_authenticated(self.__get_user_pass(self.user, self.groups)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+            target_user = "root"
+            target_group = "root"
+        
+        if retain_shell: # remove the -s flag from the args
+            index = args.index("-s")
+            args.pop(index)
+        
+        self.__pathos_bus_shell(target_user, target_group, suppress=True)
+
+        if args:
+            command = args[0]
+            args = args[1:]
+            self.execute_command(command, args)
+
+        if retain_shell: # if the -s flag was present, retain the shell
+            self.cout(f"---SHELL ACTIVE---\n{self.user} is now active.")
+            return
+        self.__pathos_bus_shell_out(suppress=True)
+        
+
+
+    def __pathos_bus_locate_user_in_group(self, user):
+        'locate the user in the group.'
+        with open(self.registry, "r") as file:
+            reg_object = json.load(file)
+        for group in reg_object["groups"]:
+            if user in reg_object["groups"][group]:
+                return group
+        raise  ValueError("Failed to locate user in group.")
+    
+    def __pass_authenticated(self, password):
+        'ask for the password and authenticate the user.'
+        self.cout("Password: ", endl="")
+        passw = input()
+        if passw == password:
+            return 1
+        return 0
+
+    
+    def __pathos_bus_shell(self, user, group, suppress=False):
+        'start a new shell.'
+        self.shells.append([self.user,self.groups,self.current_directory])
+        self.user = user
+        self.groups = group
+        if not suppress:
+            self.cout(f"---SHELL ACTIVE---\n{self.user} is now active.")
+    
+    def __pathos_bus_shell_out(self, suppress=False):
+        'exit the current shell.'
+        dump = self.shells.pop()
+        self.user = dump[0]
+        self.groups = dump[1]
+        self.current_directory = dump[2]
+        if not suppress:
+            self.cout(f"{self.user} is now active.")
+            
+    def __get_root_pass(self):
+        'get the root password.'
+        with open(self.registry, "r") as file:
+            reg_object = json.load(file)
+            return reg_object["root"]["password"]
+        
+    def __get_user_pass(self, user, group):
+        'get the user password.'
+        with open(self.registry, "r") as file:
+            reg_object = json.load(file)
+        return reg_object["groups"][group][user]["password"]
+    
     def get_registry(self):
         'get the registry of the system.'
         with open(self.registry, "r") as file:
@@ -567,5 +689,6 @@ class Terminal:
         'scripting method to return the current user'
         return self.user
     
-    
+
+
 terminal = Terminal()
