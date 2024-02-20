@@ -2,6 +2,7 @@ import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
 from datetime import date
+from os import system, name
 import os
 import syscheck # custom
 import tables # custom
@@ -100,7 +101,13 @@ class Terminal:
         return False
 
     def clear_prompt(self):
-        os.system('clear')
+        # for windows
+        if name == 'nt':
+            _ = system('cls')
+    
+        # for mac and linux(here, os.name is 'posix')
+        else:
+            _ = system('clear')
 
     def execute_alias(self, alias_name):
         command = ""
