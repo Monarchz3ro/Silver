@@ -479,6 +479,11 @@ class Terminal:
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         return meta[path_to_entry.replace("\\","/")]
+        
+    def get_ecosystem_data(self):
+        with open(self.filesystem, "r") as file:
+            meta = json.load(file)
+        return meta
 
     ### end of kernel methods - system methods start here
 

@@ -119,6 +119,14 @@
         "last_modified": "17 Feb 2024",
         "name": "clear.py"
     },
+    "root/bin/locate.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 676,
+        "last_modified": "20 Feb 2024",
+        "name": "locate.py"
+    },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
