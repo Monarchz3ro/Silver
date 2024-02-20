@@ -31,9 +31,9 @@ class Terminal:
 
     # Get shell config
     if groups == "root":
-        shell_config: str = 'root/.pathosrc'
+        shell_config: str = 'root/.silverrc'
     else:
-        shell_config: str = f'home/{__user}/.pathosrc'
+        shell_config: str = f'home/{__user}/.silverrc'
 
     def __post_init__(self):
         self.boot_up()
