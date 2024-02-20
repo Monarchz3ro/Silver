@@ -9,3 +9,4 @@ EXPORT hello='hello!'
 
 alias ll='ls -l'
 alias la='ls -l -a'
+alias rmdir='rm -r'
