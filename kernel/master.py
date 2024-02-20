@@ -2,14 +2,15 @@ import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
 import os
-import syscheck
-import tables
+import syscheck # custom
+import tables # custom
+import ast
 
 ######## refactored form of the original code ---version 0.0.2 ########
 
 @dataclass
 class Terminal:
-    user:str = "Monarch"
+    __user:str = "Monarch"
     groups: str = "users"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     default_perms: str = "rwxr-xr-x"
@@ -41,6 +42,23 @@ class Terminal:
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
             exit(1)
+    
+    def __has_imports(self, module):
+        try:
+            with open(module.__file__, 'r') as f:
+                module_content = f.read()
+            tree = ast.parse(module_content)
+        except SyntaxError:
+            print(f"Error parsing {module.__name__}. Skipping.")
+            return False
+
+        # check if the AST contains any import statements
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import) or isinstance(node, ast.ImportFrom): 
+                return True
+
+        return False
+
 
     def load_commands(self):
         'load all commands from the bin directory.'
@@ -51,6 +69,9 @@ class Terminal:
                     spec = importlib.util.spec_from_file_location(module, f"{self.env_path_var}/{file}")
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
+                    if self.__has_imports(mod):
+                        print(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimise risks of system compromise.")
+                        continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
                     else:
@@ -72,7 +93,7 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
+            dir_prompt:str = f"{self.__user.lower()}@PathOS:{self.current_directory[to_strip:].lower()}/ $ "
             self.cout(dir_prompt,endl="")
             comm = input()
             if not comm:
@@ -83,7 +104,7 @@ class Terminal:
             if command == "sudo":
                 self.__process_sudo(args)
                 continue
-            if command in ["exit","logout","quit"]:
+            elif command in ["exit","logout","quit"]:
                 if self.shells:
                     self.__pathos_bus_shell_out()
                     continue
@@ -94,7 +115,7 @@ class Terminal:
             
     def __process_sudo(self, args):
         'process the sudo command.'
-        target_user = self.user
+        target_user = self.__user
         target_group = self.groups
         if not args:
             self.cout("///USAGE/// sudo [command] [args]")
@@ -117,7 +138,7 @@ class Terminal:
                 return
         
         elif become_root:
-            if self.user == "root":
+            if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
                 return
             if self.__pass_authenticated(self.__get_root_pass()):
@@ -131,10 +152,10 @@ class Terminal:
             args.pop(index)
 
         else:
-            if self.user == "root":
+            if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
                 return
-            if self.__pass_authenticated(self.__get_user_pass(self.user, self.groups)):
+            if self.__pass_authenticated(self.__get_user_pass(self.__user, self.groups)):
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
@@ -154,7 +175,7 @@ class Terminal:
             self.execute_command(command, args)
 
         if retain_shell: # if the -s flag was present, retain the shell
-            self.cout(f"---SHELL ACTIVE---\n{self.user} is now active.")
+            self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
             return
         self.__pathos_bus_shell_out(suppress=True)
         
@@ -180,20 +201,20 @@ class Terminal:
     
     def __pathos_bus_shell(self, user, group, suppress=False):
         'start a new shell.'
-        self.shells.append([self.user,self.groups,self.current_directory])
-        self.user = user
+        self.shells.append([self.__user,self.groups,self.current_directory])
+        self.__user = user
         self.groups = group
         if not suppress:
-            self.cout(f"---SHELL ACTIVE---\n{self.user} is now active.")
+            self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
     
     def __pathos_bus_shell_out(self, suppress=False):
         'exit the current shell.'
         dump = self.shells.pop()
-        self.user = dump[0]
+        self.__user = dump[0]
         self.groups = dump[1]
         self.current_directory = dump[2]
         if not suppress:
-            self.cout(f"{self.user} is now active.")
+            self.cout(f"{self.__user} is now active.")
             
     def __get_root_pass(self):
         'get the root password.'
@@ -292,8 +313,8 @@ class Terminal:
                 relative_path = os.path.relpath(fullpath, self.kernel) # get the relative path of the file
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
-                    permissions="drwxr-x--x",
-                    owner=self.user,
+                    permissions="-rwxr-x--x",
+                    owner=self.__user,
                     group=self.groups,
                     size=os.path.getsize(fullpath),
                     last_modified=self.current_time,
@@ -306,7 +327,7 @@ class Terminal:
                 self.create_new_meta_entry(
                     path_to_entry=relative_path.replace("\\", "/"),
                     permissions="drwxr-xr-x",
-                    owner=self.user,
+                    owner=self.__user,
                     group=self.groups,
                     size=0,
                     last_modified=self.current_time,
@@ -325,7 +346,7 @@ class Terminal:
                     self.create_new_meta_entry(
                         path_to_entry=relative_path.replace("\\", "/"),
                         permissions="drwxr-xr-x",
-                        owner=self.user,
+                        owner=self.__user,
                         group=self.groups,
                         size=0,
                         last_modified=self.current_time,
@@ -506,7 +527,7 @@ class Terminal:
         'scripting method to change directories'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "x", self.user, self.groups):
+            if not self.allowed(target, "x", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_cd(path)
             return
@@ -516,7 +537,7 @@ class Terminal:
         'scripting method to list directories'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "x", self.user, self.groups):
+            if not self.allowed(target, "x", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             elif long:
                 return self.__pathos_bus_listdir_long(path)
@@ -528,7 +549,7 @@ class Terminal:
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         parent_to_target = os.path.dirname(target)
         if self.legal(target):
-            if not self.allowed(parent_to_target, "w", self.user, self.groups):
+            if not self.allowed(parent_to_target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             if p:
                 self.__pathos_bus_mkdir_p(path) 
@@ -542,7 +563,7 @@ class Terminal:
         'scripting method to print contents of a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "r", self.user, self.groups):
+            if not self.allowed(target, "r", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             to_print = self.get_file_contents(path)
             self.cout(to_print)
@@ -555,13 +576,13 @@ class Terminal:
         if not self.checkxistence(target):
             print("A new one shall be created.")
             parent_to_target = os.path.dirname(target)
-            if not self.allowed(parent_to_target, "w", self.user, self.groups):
+            if not self.allowed(parent_to_target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
                 "permissions":f"-{self.default_perms}",
-                "owner":self.user,
+                "owner":self.__user,
                 "group":self.groups,
                 "size":self.get_size(contents),
                 "last_modified":self.current_time,
@@ -573,7 +594,7 @@ class Terminal:
             return
         
         elif self.validated(target):
-            if not self.allowed(target, "w", self.user, self.groups):
+            if not self.allowed(target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "w") as file:
                 file.write(contents)
@@ -586,7 +607,7 @@ class Terminal:
         'scripting method to append to a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "w", self.user, self.groups):
+            if not self.allowed(target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "a") as file:
                 file.write(contents)
@@ -599,7 +620,7 @@ class Terminal:
         'scripting method to read a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "r", self.user, self.groups):
+            if not self.allowed(target, "r", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             return self.get_file_contents(path)
         raise ValueError("2: Validation Check Failed")
@@ -618,7 +639,7 @@ class Terminal:
         'scripting method to remove a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "w", self.user, self.groups):
+            if not self.allowed(target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_remove(path, r)
             return
@@ -629,13 +650,13 @@ class Terminal:
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if not self.checkxistence(target):
             parent_to_target = os.path.dirname(target)
-            if not self.allowed(parent_to_target, "w", self.user, self.groups):
+            if not self.allowed(parent_to_target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
                 "permissions":f"-{self.default_perms}",
-                "owner":self.user,
+                "owner":self.__user,
                 "group":self.groups,
                 "size":0,
                 "last_modified":self.current_time,
@@ -653,7 +674,15 @@ class Terminal:
     
     def whoami(self):
         'scripting method to return the current user'
-        return self.user
+        return self.__user
+    
+    def joinpath(self, *args):
+        'scripting method to join paths'
+        return os.path.join(*args).replace("\\","/")
+    
+    def isdir(self, path):
+        'scripting method to check if a path is a directory'
+        return os.path.isdir(os.path.join(self.root_dir, path))
     
 
 
