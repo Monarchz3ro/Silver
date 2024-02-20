@@ -4,5 +4,5 @@ def main(self,args):
     if len(args) > 0 or "--h" in args:
         self.cout("///USAGE///\nlogout or exit")
         return
-    self.cout("---SYSTEM EXIT AUTHORISED---")
+    self.cout("---SYSTEM EXIT AUTHORIZED---")
     exit()

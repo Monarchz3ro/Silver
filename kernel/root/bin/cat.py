@@ -15,14 +15,14 @@ def main(self:object, args:list[str]):
             writes.append(spam)
             user_input = []
             # get user input until there's a line break
-            print('---USER INPUT---')
+            self.cout('---USER INPUT---')
             while True:
                 try:
                     line = input()
                 except EOFError:
                     break
                 user_input.append(line)
-            print('---USER INPUT---')
+            self.cout('---USER INPUT---')
         else:
             paths.append(eggs)
     
@@ -32,7 +32,7 @@ def main(self:object, args:list[str]):
             try:
                 self.print_file(path.replace("\\", "/"))
             except Exception as e:
-                print(f"///ERROR///\n{e}")
+                self.cout(f"///ERROR///\n{e}")
 
     
     # if there are writes, concatenate the files and write the result to the specified file
@@ -57,7 +57,7 @@ def main(self:object, args:list[str]):
                 while count < len(content):
                     self.append_file(args[writes[0] + 1], content[count] + "\n")
                     count += 1
-                print("---SUCCESS---\nFile written successfully.")
+                self.cout("---SUCCESS---\nFile written successfully.")
             except ValueError as e:
                 self.cout(f"///ERROR///\n{e}")
 
@@ -74,7 +74,7 @@ def main(self:object, args:list[str]):
                 while count < len(content):
                     self.append_file(args[writes[0] + 1], content[count] + "\n")
                     count += 1
-                print("---SUCCESS---\nFile appended successfully.")
+                self.cout("---SUCCESS---\nFile appended successfully.")
             except ValueError as e:
                 self.cout(f"///ERROR///\n{e}")
         else:

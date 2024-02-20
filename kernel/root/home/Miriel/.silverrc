@@ -1,0 +1,11 @@
+# .pathosrc
+
+# User specific environment
+
+PATH='/bin/'
+
+# User specific aliases and functions
+
+alias ll='ls -l'
+alias la='ls -l -a'
+alias rmdir='rm -r'

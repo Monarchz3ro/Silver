@@ -4,7 +4,7 @@
 
 def main(self:object, args: list[str]):
     if len(args) == 0 or "--h" in args:
-        print("///USAGE///\nrm <-r> (file) <file2> <file3>...\nRemoves the provided files and directories.")
+        self.cout("///USAGE///\nrm <-r> (file) <file2> <file3>...\nRemoves the provided files and directories.")
         return
     flags = []; paths = []
     for arg in args:
@@ -16,4 +16,4 @@ def main(self:object, args: list[str]):
         for path in paths:
             self.remove(path, r="-r" in flags)
     except Exception as e:
-        print(f"///ERROR///\n{e}")
+        self.cout(f"///ERROR///\n{e}")
