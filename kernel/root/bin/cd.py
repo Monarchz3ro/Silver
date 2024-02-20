@@ -9,7 +9,7 @@ def main(self:object, args:list[str]):
     target = self.joinpath(self.current_directory, args[0])
     is_a_dir = self.isdir(target)
     if not is_a_dir:
-        print(f"///ERROR///\n'{target}' isn't a directory")
+        self.cout(f"///ERRORS///\n'{target}' isn't a directory")
     else:
         try:
             self.change_directory(target)
