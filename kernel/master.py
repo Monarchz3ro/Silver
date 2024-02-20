@@ -11,6 +11,7 @@ import ast
 
 @dataclass
 class Terminal:
+    __def_user:str = "Monarch"
     __user:str = "Monarch"
     groups:str = "users"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
@@ -725,6 +726,19 @@ class Terminal:
             return self.get_file_contents(path)
         raise ValueError("2: Validation Check Failed")
     
+    def obtain_shells(self, listform = False):
+        'scripting method to return active shells'
+        active_shells = self.shells
+        if not active_shells:
+            raise ValueError("Misc: No shells detected.")
+        ret = [f"{self.__def_user} (origin)" ]
+        for shell in active_shells:
+            ret.append(shell[0])
+        if listform:
+            ret.pop(0)
+            return ret
+        self.cout(" > ".join(ret))
+    
     def ret_pwd(self):
         'scripting method to return the current working directory'
         cwd = self.current_directory
@@ -783,6 +797,19 @@ class Terminal:
     def isdir(self, path):
         'scripting method to check if a path is a directory'
         return os.path.isdir(os.path.join(self.root_dir, path))
+    
+    def cout(self, message, endl="\n"):
+        'scripting method to print to the terminal'
+        if type(message) in [list, tuple]:
+            for item in message:
+                print(item.replace("\\","/"), end=endl)
+            return
+        elif type(message) == dict:
+            for key in message:
+                print(f"{key}: {message[key]}")
+            return
+        print(message.replace("\\","/"), end=endl)
+    
 
     
 terminal = Terminal()
