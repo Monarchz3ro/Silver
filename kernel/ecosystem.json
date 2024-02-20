@@ -103,6 +103,22 @@
         "last_modified": "17 Feb 2024",
         "name": "mv.py"
     },
+    "root/bin/uname.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 676,
+        "last_modified": "17 Feb 2024",
+        "name": "uname.py"
+    },
+    "root/bin/clear.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 676,
+        "last_modified": "17 Feb 2024",
+        "name": "clear.py"
+    },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
