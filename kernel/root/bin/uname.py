@@ -2,4 +2,4 @@
 # Usage: uname
 
 def main(self:object, args: list[str]):
-    print("PathOS")
+    self.cout("PathOS")

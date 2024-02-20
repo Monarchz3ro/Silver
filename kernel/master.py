@@ -90,7 +90,7 @@ class Terminal:
                 module_content = f.read()
             tree = ast.parse(module_content)
         except SyntaxError:
-            print(f"Error parsing {module.__name__}. Skipping.")
+            self.cout(f"Error parsing {module.__name__}. Skipping.")
             return False
 
         # check if the AST contains any import statements
@@ -141,14 +141,14 @@ class Terminal:
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
                     if self.__has_imports(mod):
-                        print(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
+                        self.cout(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
                         continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
                     else:
-                        print(f"Error: {module} module does not have a 'main' function.")
+                        self.cout(f"Error: {module} module does not have a 'main' function.")
                 except Exception as e:
-                    print(f"Error processing command {file}: {e}")
+                    self.cout(f"Error processing command {file}: {e}")
 
     def execute_command(self, command, args):
         if command in self.commands:
@@ -156,15 +156,15 @@ class Terminal:
                 to_execute = self.commands[command]
                 to_execute(self, args)
             else:
-                print(f"Silver: cannot execute command '{command}' --> don't have permissions.")
+                self.cout(f"Silver: cannot execute command '{command}' --> don't have permissions.")
         else:
             try:
                 self.execute_alias(command)
             except:
-                print(f'Silver: command "{command}" not found.')
+                self.cout(f'Silver: command "{command}" not found.')
     
     def cout(self, message, endl="\n"):
-        print(message.replace("\\","/"), end=endl)
+        self.cout(message.replace("\\","/"), end=endl)
 
     def initialise(self):
         'initialise the system.'
@@ -483,13 +483,19 @@ class Terminal:
     def get_ecosystem_data(self):
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
+            
+        # check for every items in the ecosystem
+        # if the user has read permission to it
+        for i in list(meta):
+            if not self.allowed(os.path.join(self.kernel, i), "r", self.__user, self.groups):
+                meta.pop(i)
         return meta
 
     ### end of kernel methods - system methods start here
 
     def create_new_file(self, path_to_file, data:dict=None, contents=""):
         'create a new file. accepts a relpath string, a parsed dict with metadata and a string of contents.'
-        print(os.path.join(self.root_dir, path_to_file))
+        self.cout(os.path.join(self.root_dir, path_to_file))
         with open(os.path.join(self.root_dir, path_to_file), "w") as file:
             file.write(contents)
         self.create_new_meta_entry(
@@ -522,7 +528,7 @@ class Terminal:
         if self.validated(os.path.join(self.current_directory, path_to_file)):
             relative_path_to_file = os.path.join(self.current_directory, path_to_file).split('kernel/', 1)[1]
             relative_new_path = os.path.join(self.current_directory, new_path).split('kernel/', 1)[1]
-            print(relative_path_to_file, relative_new_path)
+            self.cout(relative_path_to_file, relative_new_path)
             self.update_path_in_meta(relative_path_to_file, relative_new_path)
             self.update_meta_entry(relative_new_path, "last_modified", self.current_formatted_data)
             self.update_meta_entry(relative_new_path, "name", os.path.basename(relative_new_path))
@@ -690,7 +696,7 @@ class Terminal:
         'scripting method to write to a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if not self.checkxistence(target):
-            print("A new one shall be created.")
+            self.cout("A new one shall be created.")
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")

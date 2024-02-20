@@ -4,7 +4,7 @@
 
 def main(self:object, args: list[str]):
     if len(args) == 0 or "--h" in args:
-        print("///USAGE///\nlocate <occurrence string>\nSearch for occurrences in files names.")
+        self.cout("///USAGE///\nlocate <occurrence string>\nSearch for occurrences in files names.")
         return
     occurrence_string = args[0]
     list_of_files = []
@@ -19,5 +19,5 @@ def main(self:object, args: list[str]):
     list_of_files = list_of_files.replace(']', '')
     list_of_files = list_of_files.replace("'", '')
     list_of_files = list_of_files.replace(', ', '\n')
-    print(list_of_files)
+    self.cout(list_of_files)
 
