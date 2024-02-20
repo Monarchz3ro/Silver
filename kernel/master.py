@@ -10,8 +10,8 @@ import tables
 
 @dataclass
 class Terminal:
-    user:str = "root"
-    groups: str = "root"
+    user:str = "Miriel"
+    groups: str = "users"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     default_perms: str = "rwxr-xr-x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
@@ -61,8 +61,11 @@ class Terminal:
 
     def execute_command(self, command, args):
         if command in self.commands:
-            to_execute = self.commands[command]
-            to_execute(self, args)
+            if self.allowed(f"root/bin/{command}.py", 'x', self.user, self.groups):
+                to_execute = self.commands[command]
+                to_execute(self, args)
+            else:
+                print(f"Silver: cannot execute command '{command}' --> don't have no permissions.")
         else:
             print(f'Silver: command "{command}" not found.')
     
