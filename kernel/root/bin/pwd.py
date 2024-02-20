@@ -8,6 +8,5 @@ def main(self:object, args:list[str]):
         return
     pwd = self.ret_pwd()
     if not pwd:
-        self.cout("---SYSTEM ROOT DETECTED---")
-        return
-    self.cout(pwd)
+        pwd = '/'
+    self.cout(f"Working Dir: '{pwd}'")

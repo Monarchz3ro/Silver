@@ -82,8 +82,11 @@ class Terminal:
 
     def execute_command(self, command, args):
         if command in self.commands:
-            to_execute = self.commands[command]
-            to_execute(self, args)
+            if self.allowed(f"root/bin/{command}.py", 'x', self.__user, self.groups):
+                to_execute = self.commands[command]
+                to_execute(self, args)
+            else:
+                print(f"Silver: cannot execute command '{command}' --> don't have no permissions.")
         else:
             print(f'Silver: command "{command}" not found.')
 
@@ -402,13 +405,47 @@ class Terminal:
         return meta[path_to_entry.replace("\\","/")]
 
     ### end of kernel methods - system methods start here
+
+    def create_new_file(self, path_to_file, data:dict=None, contents=""):
+        'create a new file. accepts a relpath string, a parsed dict with metadata and a string of contents.'
+        print(os.path.join(self.root_dir, path_to_file))
+        with open(os.path.join(self.root_dir, path_to_file), "w") as file:
+            file.write(contents)
+        self.create_new_meta_entry(
+                                    data["path_to_entry"],
+                                    data["permissions"],
+                                    data["owner"],
+                                    data["group"],
+                                    data["size"], 
+                                    data["last_modified"],
+                                    data["name"]
+                                   )
     
-    def general_move(self, path_to_file, new_path):
+    def create_new_directory(self, path_to_directory, data:dict=None):
+        'create a new directory. accepts a relpath string and a parsed dict containing metadata.'
+        os.makedirs(os.path.join(self.root_dir, path_to_directory))
+        self.create_new_meta_entry(*data)
+    
+    def delete_file(self, path_to_file):
+        'delete a file. accepts a relpath string.'
+        os.remove(os.path.join(self.current_directory, path_to_file))
+        self.delete_meta_entry(path_to_file)
+    
+    def delete_directory(self, path_to_directory):
+        'delete a directory fully, ignoring if it had anything in it. accepts a relpath string.'
+        shutil.rmtree(os.path.join(self.current_directory, path_to_directory))
+        self.delete_meta_entry(path_to_directory)
+    
+    def general_move(self, path_to_file, new_path, flags=None):
         'moves anything. accepts two relpath strings.'
-        shutil.move(os.path.join(self.root_dir, path_to_file), os.path.join(self.root_dir, new_path))
-        self.update_path_in_meta(path_to_file, new_path)
-        self.update_meta_entry(new_path, "last_modified", self.current_time)
-        self.update_meta_entry(new_path, "name", os.path.basename(new_path))
+        if self.validated(os.path.join(self.current_directory, path_to_file)):
+            relative_path_to_file = os.path.join(self.current_directory, path_to_file).split('kernel/', 1)[1]
+            relative_new_path = os.path.join(self.current_directory, new_path).split('kernel/', 1)[1]
+            print(relative_path_to_file, relative_new_path)
+            self.update_path_in_meta(relative_path_to_file, relative_new_path)
+            self.update_meta_entry(relative_new_path, "last_modified", self.current_time)
+            self.update_meta_entry(relative_new_path, "name", os.path.basename(relative_new_path))
+            shutil.move(os.path.join(self.current_directory, path_to_file), os.path.join(self.current_directory, new_path))
     
     def general_copy(self, path_to_file, new_path):
         'copies anything. accepts two relpath strings.'
@@ -489,7 +526,7 @@ class Terminal:
     
     def __pathos_bus_remove(self, path, r=False):
         'pathos bus method to expose the rm command to the bus.'
-        path = os.path.relpath(os.path.join(self.root_dir, path), self.kernel).replace("\\","/")
+        path = os.path.relpath(os.path.join(self.current_directory, path), self.kernel).replace("\\","/")
         if not r:
             try:
                 os.remove(os.path.join(self.kernel,path))
@@ -501,7 +538,7 @@ class Terminal:
             with open(self.filesystem, "r") as file:
                 memory_dump = json.load(file)
             try:
-                for filepath, drs, files in os.walk(os.path.join(self.root_dir, path)):
+                for filepath, drs, files in os.walk(os.path.join(self.current_directory, path)):
                     for file in files:
                         self.delete_meta_entry(os.path.relpath(os.path.join(filepath, file), self.kernel).replace("\\","/"))
                     for dr in drs:
@@ -708,5 +745,5 @@ class Terminal:
         print(message.replace("\\","/"), end=endl)
     
 
-
+    
 terminal = Terminal()
