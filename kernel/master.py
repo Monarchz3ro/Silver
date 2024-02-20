@@ -570,11 +570,11 @@ class Terminal:
     
     def __pathos_bus_mkdir(self, path):
         'pathos bus method to expose the mkdir command to the bus.'
-        os.mkdir(os.path.join(self.root_dir, path))
+        os.mkdir(os.path.join(self.current_directory, path))
     
     def __pathos_bus_mkdir_p(self, path):
         'pathos bus method to expose the mkdir -p command to the bus.'
-        os.makedirs(os.path.join(self.root_dir, path))
+        os.makedirs(os.path.join(self.current_directory, path))
 
     def __pathos_bus_update_meta(self, path_to_entry, attribute, new_value):
         'pathos bus method to expose the ecosystem to the bus.'
