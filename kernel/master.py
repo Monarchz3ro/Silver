@@ -98,6 +98,9 @@ class Terminal:
 
         return False
 
+    def clear_prompt(self):
+        os.system('clear')
+
     def execute_alias(self, alias_name):
         command = ""
         args = []

@@ -9,4 +9,3 @@ EXPORT hello='hello!'
 
 alias ll='ls -l'
 alias la='ls -l -a'
-alias lx='ls -l -a -h'
