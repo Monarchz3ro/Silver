@@ -1,6 +1,7 @@
 import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
+from datetime import date
 import os
 import syscheck # custom
 import tables # custom
@@ -11,21 +12,32 @@ import ast
 @dataclass
 class Terminal:
     __user:str = "Monarch"
-    groups: str = "users"
+    groups:str = "users"
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     default_perms: str = "rwxr-xr-x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
-    current_time:str = "18 Feb 2024"
+    current_date: str = date.today()
+    current_formatted_data:str = current_date.strftime("%d %b %Y")
     clipout: str = root_dir.replace("\\", "/")
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
     shells: list = field(default_factory=list)
+    shell_variables: dict = field(default_factory=dict)
+    aliases: dict = field(default_factory=dict)
+
+    # Get shell config
+    if groups == "root":
+        shell_config: str = 'root/.pathosrc'
+    else:
+        shell_config: str = f'home/{__user}/.pathosrc'
 
     def __post_init__(self):
         self.boot_up()
+        self.create_default_environment_variables()
+        self.load_shell_config()
         self.load_commands()
         os.chdir(self.kernel)
         self.cout(f"PathOS is live and at your disposal.")
@@ -42,6 +54,33 @@ class Terminal:
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
             exit(1)
+            
+    def create_default_environment_variables(self):
+        self.shell_variables["$PATH"] = self.env_path_var
+        self.shell_variables["$DATE"] = self.current_date
+        self.shell_variables["$PRETTY_DATE"] = self.current_formatted_data
+        self.shell_variables["$REGISTRY"] = self.registry
+        self.shell_variables["$FILESYSTEM"] = self.filesystem
+        self.shell_variables["$BOOT"] = self.boot
+        
+            
+    def load_shell_config(self):
+        with open(os.path.join(self.root_dir, self.shell_config)) as f:
+            shell_config_raw = f.readlines()
+            # load the lines one by one and check
+            # if the line starts with a valid statement
+            for i in shell_config_raw:
+                if i.startswith('PATH='):  # if there's a binaries path definition
+                    path = i.split("='", 1)[1].split("'", 1)[0]
+                    self.env_path_var = (os.path.join(self.root_dir, path)).replace("\\", "/")
+                elif i.startswith('EXPORT '):  # if there's a environment variable export/creation
+                    export_var_name = i.split('EXPORT ', 1)[1].split('=', 1)[0]
+                    export_var_value = i.split("='", 1)[1].split("'", 1)[0]
+                    self.shell_variables[export_var_name] = export_var_value
+                elif i.startswith('alias '):  # if there's an alias export/creation
+                    alias_name = i.split('alias ', 1)[1].split('=', 1)[0]
+                    alias_command = i.split("='", 1)[1].split("'", 1)[0]
+                    self.aliases[alias_name] = alias_command
     
     def __has_imports(self, module):
         try:
@@ -59,6 +98,27 @@ class Terminal:
 
         return False
 
+    def execute_alias(self, alias_name):
+        command = ""
+        args = []
+        str_args = ""
+        to_print = ""
+        count = 0
+        while count < len(list(self.aliases[alias_name])):
+            to_print = to_print + list(self.aliases[alias_name])[count]
+            if to_print in self.commands:
+                command = to_print
+                str_args = self.aliases[alias_name].split(command, 1)[1]
+
+            count += 1
+
+        args_str = str_args.split(' -', 1)[1]
+        args += ['-' + str_args.split(' -', 1)[1]]
+        for i in range(str_args.count(' -') - 1):
+            args_str = '-' + args_str.split(' -', 1)[1]
+            args += [args_str]
+        
+        self.execute_command(command, args)
 
     def load_commands(self):
         'load all commands from the bin directory.'
@@ -70,7 +130,7 @@ class Terminal:
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
                     if self.__has_imports(mod):
-                        print(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimise risks of system compromise.")
+                        print(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
                         continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
@@ -85,9 +145,12 @@ class Terminal:
                 to_execute = self.commands[command]
                 to_execute(self, args)
             else:
-                print(f"Silver: cannot execute command '{command}' --> don't have no permissions.")
+                print(f"Silver: cannot execute command '{command}' --> don't have permissions.")
         else:
-            print(f'Silver: command "{command}" not found.')
+            try:
+                self.execute_alias(command)
+            except:
+                print(f'Silver: command "{command}" not found.')
     
     def cout(self, message, endl="\n"):
         print(message.replace("\\","/"), end=endl)
@@ -307,7 +370,7 @@ class Terminal:
                 owner="root",
                 group="root",
                 size=0,
-                last_modified=self.current_time,
+                last_modified=self.current_formatted_data,
                 name="root"
             )
         for filepath, dirs, files in os.walk(self.root_dir):
@@ -320,7 +383,7 @@ class Terminal:
                     owner=self.__user,
                     group=self.groups,
                     size=os.path.getsize(fullpath),
-                    last_modified=self.current_time,
+                    last_modified=self.current_formatted_data,
                     name=file
                     )
     
@@ -333,7 +396,7 @@ class Terminal:
                     owner=self.__user,
                     group=self.groups,
                     size=0,
-                    last_modified=self.current_time,
+                    last_modified=self.current_formatted_data,
                     name=dir
                     )
                 
@@ -352,7 +415,7 @@ class Terminal:
                         owner=self.__user,
                         group=self.groups,
                         size=0,
-                        last_modified=self.current_time,
+                        last_modified=self.current_formatted_data,
                         name=dir
                         )
 
@@ -445,7 +508,7 @@ class Terminal:
             relative_new_path = os.path.join(self.current_directory, new_path).split('kernel/', 1)[1]
             print(relative_path_to_file, relative_new_path)
             self.update_path_in_meta(relative_path_to_file, relative_new_path)
-            self.update_meta_entry(relative_new_path, "last_modified", self.current_time)
+            self.update_meta_entry(relative_new_path, "last_modified", self.current_formatted_data)
             self.update_meta_entry(relative_new_path, "name", os.path.basename(relative_new_path))
             shutil.move(os.path.join(self.current_directory, path_to_file), os.path.join(self.current_directory, new_path))
     
@@ -458,7 +521,7 @@ class Terminal:
             owner=self.get_meta_entry(path_to_file)["owner"],
             group=self.get_meta_entry(path_to_file)["group"],
             size=self.get_meta_entry(path_to_file)["size"],
-            last_modified=self.current_time,
+            last_modified=self.current_formatted_data,
             name=os.path.basename(new_path)
             )
     
@@ -622,7 +685,7 @@ class Terminal:
                 "owner":self.__user,
                 "group":self.groups,
                 "size":self.get_size(contents),
-                "last_modified":self.current_time,
+                "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
             with open(os.path.join(self.current_directory, path), "w") as file:
@@ -635,7 +698,7 @@ class Terminal:
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "w") as file:
                 file.write(contents)
-            self.__pathos_bus_update_meta(target, "last_modified", self.current_time)
+            self.__pathos_bus_update_meta(target, "last_modified", self.current_formatted_data)
             self.__pathos_bus_update_meta(target, "size", self.get_size(contents))
             return
         raise ValueError("2: Validation Check Failed")
@@ -648,7 +711,7 @@ class Terminal:
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "a") as file:
                 file.write(contents)
-            self.__pathos_bus_update_meta(target, "last_modified", self.current_time)
+            self.__pathos_bus_update_meta(target, "last_modified", self.current_formatted_data)
             self.__pathos_bus_update_meta(target, "size", self.get_size(contents))
             return
         raise ValueError("2: Validation Check Failed")
@@ -696,7 +759,7 @@ class Terminal:
                 "owner":self.__user,
                 "group":self.groups,
                 "size":0,
-                "last_modified":self.current_time,
+                "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
             self.cout("It shall be created.")
@@ -705,7 +768,7 @@ class Terminal:
             self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
             return
         else:
-            self.update_meta_entry(target, "last_modified", self.current_time)
+            self.update_meta_entry(target, "last_modified", self.current_formatted_data)
             self.cout(f"{os.path.basename(target)} touched.")
             return
     
