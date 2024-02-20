@@ -7,6 +7,38 @@
         "last_modified": "17 Feb 2024",
         "name": "root"
     },
+    "root/root": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "root"
+    },
+    "root/home": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "root"
+    },
+    "root/home/Miriel": {
+        "permissions": "drwxr--",
+        "owner": "Miriel",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "Miriel"
+    },
+    "root/home/Monarch": {
+        "permissions": "drwxr--",
+        "owner": "Monarch",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "Monarch"
+    },
     "root/bin": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
