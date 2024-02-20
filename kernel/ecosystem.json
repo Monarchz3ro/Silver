@@ -7,6 +7,62 @@
         "last_modified": "17 Feb 2024",
         "name": "root"
     },
+    "root/root": {
+        "permissions": "drwxr--",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "root"
+    },
+    "root/root/.bashrc": {
+        "permissions": "drwxr--",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": ".bashrc"
+    },
+    "root/home": {
+        "permissions": "drwxr-xr-x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "home"
+    },
+    "root/home/Miriel": {
+        "permissions": "drwxr--",
+        "owner": "Miriel",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "Miriel"
+    },
+    "root/home/Miriel/.bashrc": {
+        "permissions": "drwxr--",
+        "owner": "Miriel",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": ".bashrc"
+    },
+    "root/home/Monarch": {
+        "permissions": "drwxr--",
+        "owner": "Monarch",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": "Monarch"
+    },
+    "root/home/Monarch/.bashrc": {
+        "permissions": "drwxr--",
+        "owner": "Monarch",
+        "group": "users",
+        "size": 0,
+        "last_modified": "17 Feb 2024",
+        "name": ".bashrc"
+    },
     "root/bin": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
@@ -31,14 +87,6 @@
         "last_modified": "17 Feb 2024",
         "name": "cd.py"
     },
-    "root/bin/ls.py": {
-        "permissions": "drwxr-x--x",
-        "owner": "root",
-        "group": "root",
-        "size": 1546,
-        "last_modified": "17 Feb 2024",
-        "name": "ls.py"
-    },
     "root/bin/mkdir.py": {
         "permissions": "drwxr-x--x",
         "owner": "root",
@@ -46,6 +94,14 @@
         "size": 676,
         "last_modified": "17 Feb 2024",
         "name": "mkdir.py"
+    },
+    "root/bin/mv.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 676,
+        "last_modified": "17 Feb 2024",
+        "name": "mv.py"
     },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
@@ -158,5 +214,13 @@
         "size": 1546,
         "last_modified": "17 Feb 2024",
         "name": "rm.py"
+    },
+    "root/bin/ls.py": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 1546,
+        "last_modified": "17 Feb 2024",
+        "name": "ls.py"
     }
 }
