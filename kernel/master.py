@@ -15,8 +15,6 @@ class Terminal:
     __def_user:str = "Monarch"
     __user:str = "Monarch"
     groups: str = "users"
-    __su_success: int = 0
-    __sudo_called: int = 0
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     __default_perms: str = "rwxr-x--x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
@@ -252,105 +250,92 @@ class Terminal:
                 return
             target_user = "root"
             target_group = "root"
-        
             
 
         if retain_shell: # if the -s flag was present, perform actions in a shell
             index = args.index("-s")
             args.pop(index)
-            self.__pathos_bus_shell(target_user, target_group, suppress=True)
-            if args:
-                command = args[0]
-                args = args[1:]
+        
+        command_mode = len(args) > 0
+        if command_mode:
+            command = args[0]
+            args = args[1:]
+
+            #from this point on, branch out to see if a simple switch is required
+            #or if the command is to be executed in a shell
+
+            if retain_shell: #shell out
+                self.__pathos_bus_shell(target_user, target_group)
                 self.execute_command(command, args)
-                self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
-                if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
-                    self.__pathos_bus_shell_out(suppress=True)
-        else:
-            store_user = self.__user
-            store_group = self.groups
-            self.__user = target_user
-            self.groups = target_group
-            if args:
-                command = args[0]
-                args = args[1:]
+            else: #simple switch
+                store_user = self.__user
+                store_group = self.groups
+                self.__user = target_user
+                self.groups = target_group
                 self.execute_command(command, args)
-                self.sudo_called = 0
-                return
-            if not self.__su_success:
                 self.__user = store_user
                 self.groups = store_group
-        self.sudo_called = 0
-    
-    def __process_su(self, args): # add the -p functionality soon (if it is not added, teleport to the previous user's directory after su)
-        'process the su command.'
-        self.__su_success = 0
-        if "--h" in args:
-            self.cout("///USAGE/// su [user] <-c> <command> <-> <-p>")
-            index = args.index("--h")
-            args.pop(index)
-        
-        shell_mode = "-" in args
-        if shell_mode:
+        else:
+            if retain_shell: #shell out
+                self.__pathos_bus_shell(target_user, target_group)
+
+    def __process_su(self, args):
+        shell_retain = "-" in args
+        command_mode = "-c" in args
+        authorised = self.__user == "root"
+        target_user = "root" #default
+        target_group = "root" #default
+        print(args, "| shell retain: ",shell_retain, " | command mode:", command_mode, " | auth: ", authorised)
+
+        if shell_retain: #remove the - flag from the argslist
             index = args.index("-")
             args.pop(index)
-        preserve_mode = "-p" in args
-        if preserve_mode:
-            index = args.index("-p")
-            args.pop(index)
-        command_mode = "-c" in args
-        if command_mode:
+        
+        if command_mode: #remove the -c flag and the command from the argslist
             index = args.index("-c")
-            commandstring = args[index+1:]
-            args = args[:index]
-
-        try:
-            target_user = args[0]
-            target_group = self.__pathos_bus_locate_user_in_group(target_user)
-        except IndexError:
-            target_user = "root"
-            target_group = "root"
-        except ValueError:
-            self.cout("///ERROR///\nUser not found.")
-            self.__su_success = 0
+            commandslist = args[index+1:]
+            command = commandslist[0]
+            args_to_pass = commandslist[1:]
+            args.pop(index)
+            args = args[:index]     
         
-        if self.__user != "root":
-            _pass = self.__get_root_pass()
-            if not self.__pass_authenticated(_pass):
-                self.cout("///ERROR///\nAuthentication failed.")
-                self.__su_success = 0
+        #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
+        if args: #handle the user
+            try:
+                target_user = args[0]
+                target_group = self.__pathos_bus_locate_user_in_group(target_user)
+            except ValueError as e:
+                self.cout(f"///ERROR///\n{e}")
                 return
-            self.cout("---AUTHENTICATION SUCCESSFUL---")
-        elif not self.sudo_called:
-            print("You are already the system administrator.")
         
-        if shell_mode:
+        if not authorised: #skip the password check if the user is already root
+            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                authorised = 1
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+        
+        if shell_retain: #shell out
             self.__pathos_bus_shell(target_user, target_group)
-            self.__su_success = 1 #su used successfully
-        else:
+            if command_mode:
+                self.execute_command(command, args_to_pass)
+        else: #simple switch
             self.__user = target_user
             self.groups = target_group
-            self.__su_success = 1 #su used successfully
-        
-        if command_mode:
-            command = commandstring[0]
-            args = commandstring[1:]
-            if command == "su":
-                print("///ERROR///\nMisc: Orobouros Error.")
-                self.__su_success = 0
-                return 
-            self.execute_command()
-        #as of right now, the -p flag does nothing. but it soon will when the default directory is the user's home directory.
-        return
+            if command_mode:
+                self.execute_command(command, args_to_pass) 
 
     def __pathos_bus_locate_user_in_group(self, user):
         'locate the user in the group.'
+        if user == "root":
+            return "root"
         with open(self.registry, "r") as file:
             reg_object = json.load(file)
         for group in reg_object["groups"]:
             if user in reg_object["groups"][group]:
                 return group
-        raise  ValueError("Failed to locate user in group.")
+        raise ValueError("Failed to locate user in group.")
     
     def __pass_authenticated(self, password):
         'ask for the password and authenticate the user.'
@@ -386,6 +371,8 @@ class Terminal:
         
     def __get_user_pass(self, user, group):
         'get the user password.'
+        if user == "root" and group == "root":
+            return self.__get_root_pass()
         with open(self.registry, "r") as file:
             reg_object = json.load(file)
         return reg_object["groups"][group][user]["password"]
