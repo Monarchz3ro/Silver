@@ -313,7 +313,7 @@ class Terminal:
                 return
             self.cout("---AUTHENTICATION SUCCESSFUL---")
         else:
-            print("You're already the system administrator.")
+            print("You are already the system administrator.")
         
         if shell_mode:
             self.__pathos_bus_shell(target_user, target_group)
