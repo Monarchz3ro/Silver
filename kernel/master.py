@@ -6,15 +6,16 @@ import syscheck # custom
 import tables # custom
 import ast
 
-######## refactored form of the original code ---version 0.0.2 ########
+######## refactored form of the original code ---version 0.0.3 ########
 
 @dataclass
 class Terminal:
     __def_user:str = "Monarch"
     __user:str = "Monarch"
     groups: str = "users"
+    __su_success: int = 0
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
-    default_perms: str = "rwxr-xr-x"
+    __default_perms: str = "rwxr-x--x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
@@ -32,6 +33,7 @@ class Terminal:
         self.cout(f"PathOS is live and at your disposal.")
         self.initialise()
 
+
     def boot_up(self):
         if self.checkxistence(self.boot):
             with open(self.boot, "r") as file:
@@ -41,7 +43,7 @@ class Terminal:
                     exit(1)
                 self.cout("---BOOT SUCCESSFUL---")
         else:
-            self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the system directories. Please reinstall the system.")
+            self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the /boot directory. Please reinstall the system.")
             exit(1)
     
     def __has_imports(self, module):
@@ -59,7 +61,6 @@ class Terminal:
                 return True
 
         return False
-
 
     def load_commands(self):
         'load all commands from the bin directory.'
@@ -81,12 +82,15 @@ class Terminal:
                     print(f"Error processing command {file}: {e}")
 
     def execute_command(self, command, args):
-        if command in self.commands:
+        'execute a command.'
+        if command == "su":
+            self.__process_su(args)
+        elif command in self.commands:
             if self.allowed(f"root/bin/{command}.py", 'x', self.__user, self.groups):
                 to_execute = self.commands[command]
                 to_execute(self, args)
             else:
-                print(f"Silver: cannot execute command '{command}' --> don't have no permissions.")
+                print(f"Silver: cannot execute command '{command}' --> Permission denied.")
         else:
             print(f'Silver: command "{command}" not found.')
 
@@ -178,9 +182,74 @@ class Terminal:
         if retain_shell: # if the -s flag was present, retain the shell
             self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
             return
-        self.__pathos_bus_shell_out(suppress=True)
+        print(f"The current user is {self.__user}.")
+        if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
+            self.__pathos_bus_shell_out(suppress=True)
+        print(f"The current after the end of sudo is {self.__user}.")
+    
+    def __process_su(self, args): # add the -p functionality soon (if it is not added, teleport to the previous user's directory after su)
+        'process the su command.'
+        self.__su_success = 0
+        if "--h" in args:
+            self.cout("///USAGE/// su [user] <-c> <command> <-> <-p>")
+            index = args.index("--h")
+            args.pop(index)
         
+        shell_mode = "-" in args
+        if shell_mode:
+            index = args.index("-")
+            args.pop(index)
+        preserve_mode = "-p" in args
+        if preserve_mode:
+            index = args.index("-p")
+            args.pop(index)
+        command_mode = "-c" in args
+        if command_mode:
+            index = args.index("-c")
+            commandstring = args[index+1:]
+            args = args[:index]
+        if command_mode:
+            print("command mode:", commandstring)
+        
+        print(args)
+        print("shell mode:",shell_mode, "preserve mode:",preserve_mode, "command mode:",command_mode)
 
+        try:
+            target_user = args[0]
+            target_group = self.__pathos_bus_locate_user_in_group(target_user)
+        except IndexError:
+            target_user = "root"
+            target_group = "root"
+        except ValueError:
+            self.cout("///ERROR///\nUser not found.")
+            self.__su_success = 0
+        
+        if self.__user != "root":
+            _pass = self.__get_root_pass()
+            if not self.__pass_authenticated(_pass):
+                self.cout("///ERROR///\nAuthentication failed.")
+                self.__su_success = 0
+                return
+            self.cout("---AUTHENTICATION SUCCESSFUL---")
+        
+        if shell_mode:
+            self.__pathos_bus_shell(target_user, target_group)
+            self.__su_success = 1 #su used successfully
+        else:
+            self.__user = target_user
+            self.groups = target_group
+            self.__su_success = 1 #su used successfully
+        
+        if command_mode:
+            command = commandstring[0]
+            args = commandstring[1:]
+            if command == "su":
+                print("///ERROR///\nMisc: Orobouros Error.")
+                self.__su_success = 0
+                return 
+            self.execute_command()
+        #as of right now, the -p flag does nothing. but it soon will when the default directory is the user's home directory.
+        return
 
     def __pathos_bus_locate_user_in_group(self, user):
         'locate the user in the group.'
