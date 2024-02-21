@@ -16,6 +16,7 @@ class Terminal:
     __user:str = "Monarch"
     groups: str = "users"
     __su_success: int = 0
+    __sudo_called: int = 0
     kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     __default_perms: str = "rwxr-x--x"
     current_directory = root_dir = os.path.join(kernel,"root").replace("\\", "/")
@@ -197,10 +198,12 @@ class Terminal:
 
     def __process_sudo(self, args):
         'process the sudo command.'
+        self.sudo_called = 1
         target_user = self.__user
         target_group = self.groups
         if not args:
             self.cout("///USAGE/// sudo [command] [args]")
+            self.sudo_called = 0
             return
         
         user_specified = "-u" in args
@@ -217,16 +220,19 @@ class Terminal:
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
+                self.sudo_called = 0
                 return
         
         elif become_root:
             if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
+                self.sudo_called = 0
                 return
             if self.__pass_authenticated(self.__get_root_pass()):
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
+                self.sudo_called = 0
                 return
             target_user = "root"
             target_group = "root"
@@ -236,21 +242,22 @@ class Terminal:
         else:
             if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
+                self.sudo_called = 0
                 return
             if self.__pass_authenticated(self.__get_user_pass(self.__user, self.groups)):
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
+                self.sudo_called = 0
                 return
             target_user = "root"
             target_group = "root"
         
-        if retain_shell: # remove the -s flag from the args
+            
+
+        if retain_shell: # if the -s flag was present, perform actions in a shell
             index = args.index("-s")
             args.pop(index)
-        
-        print("shell retain", retain_shell)
-        if retain_shell: # if the -s flag was present, perform actions in a shell
             self.__pathos_bus_shell(target_user, target_group, suppress=True)
             if args:
                 command = args[0]
@@ -268,10 +275,12 @@ class Terminal:
                 command = args[0]
                 args = args[1:]
                 self.execute_command(command, args)
+                self.sudo_called = 0
                 return
             if not self.__su_success:
                 self.__user = store_user
                 self.groups = store_group
+        self.sudo_called = 0
     
     def __process_su(self, args): # add the -p functionality soon (if it is not added, teleport to the previous user's directory after su)
         'process the su command.'
@@ -312,7 +321,7 @@ class Terminal:
                 self.__su_success = 0
                 return
             self.cout("---AUTHENTICATION SUCCESSFUL---")
-        else:
+        elif not self.sudo_called:
             print("You are already the system administrator.")
         
         if shell_mode:
