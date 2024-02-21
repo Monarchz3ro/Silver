@@ -259,10 +259,8 @@ class Terminal:
         if retain_shell: # if the -s flag was present, retain the shell
             self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
             return
-        print(f"The current user is {self.__user}.")
         if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
             self.__pathos_bus_shell_out(suppress=True)
-        print(f"The current after the end of sudo is {self.__user}.")
     
     def __process_su(self, args): # add the -p functionality soon (if it is not added, teleport to the previous user's directory after su)
         'process the su command.'
@@ -285,11 +283,6 @@ class Terminal:
             index = args.index("-c")
             commandstring = args[index+1:]
             args = args[:index]
-        if command_mode:
-            print("command mode:", commandstring)
-        
-        print(args)
-        print("shell mode:",shell_mode, "preserve mode:",preserve_mode, "command mode:",command_mode)
 
         try:
             target_user = args[0]
