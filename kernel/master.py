@@ -1,6 +1,8 @@
 import shutil, json, os
 import importlib.util
 from dataclasses import dataclass, field
+from datetime import date
+from os import system, name
 import os
 import syscheck # custom
 import tables # custom
@@ -20,14 +22,25 @@ class Terminal:
     boot = os.path.join(kernel, "root/boot/boot.bin").replace("\\", "/")
     registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
-    current_time:str = "18 Feb 2024"
+    current_date: str = date.today()
+    current_formatted_data:str = current_date.strftime("%d %b %Y")
     clipout: str = root_dir.replace("\\", "/")
     env_path_var:str = (os.path.join(root_dir,"bin")).replace("\\", "/")
     commands: dict = field(default_factory=dict)
     shells: list = field(default_factory=list)
+    shell_variables: dict = field(default_factory=dict)
+    aliases: dict = field(default_factory=dict)
+
+    # Get shell config
+    if groups == "root":
+        shell_config: str = 'root/.silverrc'
+    else:
+        shell_config: str = f'home/{__user}/.silverrc'
 
     def __post_init__(self):
         self.boot_up()
+        self.create_default_environment_variables()
+        self.load_shell_config()
         self.load_commands()
         os.chdir(self.kernel)
         self.cout(f"PathOS is live and at your disposal.")
@@ -45,6 +58,33 @@ class Terminal:
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the /boot directory. Please reinstall the system.")
             exit(1)
+            
+    def create_default_environment_variables(self):
+        self.shell_variables["$PATH"] = self.env_path_var
+        self.shell_variables["$DATE"] = self.current_date
+        self.shell_variables["$PRETTY_DATE"] = self.current_formatted_data
+        self.shell_variables["$REGISTRY"] = self.registry
+        self.shell_variables["$FILESYSTEM"] = self.filesystem
+        self.shell_variables["$BOOT"] = self.boot
+        
+            
+    def load_shell_config(self):
+        with open(os.path.join(self.root_dir, self.shell_config)) as f:
+            shell_config_raw = f.readlines()
+            # load the lines one by one and check
+            # if the line starts with a valid statement
+            for i in shell_config_raw:
+                if i.startswith('PATH='):  # if there's a binaries path definition
+                    path = i.split("='", 1)[1].split("'", 1)[0]
+                    self.env_path_var = (os.path.join(self.root_dir, path)).replace("\\", "/")
+                elif i.startswith('EXPORT '):  # if there's a environment variable export/creation
+                    export_var_name = i.split('EXPORT ', 1)[1].split('=', 1)[0]
+                    export_var_value = i.split("='", 1)[1].split("'", 1)[0]
+                    self.shell_variables[export_var_name] = export_var_value
+                elif i.startswith('alias '):  # if there's an alias export/creation
+                    alias_name = i.split('alias ', 1)[1].split('=', 1)[0]
+                    alias_command = i.split("='", 1)[1].split("'", 1)[0]
+                    self.aliases[alias_name] = alias_command
     
     def __has_imports(self, module):
         try:
@@ -52,7 +92,7 @@ class Terminal:
                 module_content = f.read()
             tree = ast.parse(module_content)
         except SyntaxError:
-            print(f"Error parsing {module.__name__}. Skipping.")
+            self.cout(f"Error parsing {module.__name__}. Skipping.")
             return False
 
         # check if the AST contains any import statements
@@ -61,6 +101,37 @@ class Terminal:
                 return True
 
         return False
+
+    def clear_prompt(self):
+        # for windows
+        if name == 'nt':
+            _ = system('cls')
+    
+        # for mac and linux(here, os.name is 'posix')
+        else:
+            _ = system('clear')
+
+    def execute_alias(self, alias_name):
+        command = ""
+        args = []
+        str_args = ""
+        to_print = ""
+        count = 0
+        while count < len(list(self.aliases[alias_name])):
+            to_print = to_print + list(self.aliases[alias_name])[count]
+            if to_print in self.commands:
+                command = to_print
+                str_args = self.aliases[alias_name].split(command, 1)[1]
+
+            count += 1
+
+        args_str = str_args.split(' -', 1)[1]
+        args += ['-' + str_args.split(' -', 1)[1]]
+        for i in range(str_args.count(' -') - 1):
+            args_str = '-' + args_str.split(' -', 1)[1]
+            args += [args_str]
+        
+        self.execute_command(command, args)
 
     def load_commands(self):
         'load all commands from the bin directory.'
@@ -72,14 +143,14 @@ class Terminal:
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
                     if self.__has_imports(mod):
-                        print(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimise risks of system compromise.")
+                        self.cout(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
                         continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
                     else:
-                        print(f"Error: {module} module does not have a 'main' function.")
+                        self.cout(f"Error: {module} module does not have a 'main' function.")
                 except Exception as e:
-                    print(f"Error processing command {file}: {e}")
+                    self.cout(f"Error processing command {file}: {e}")
 
     def execute_command(self, command, args):
         'execute a command.'
@@ -92,7 +163,13 @@ class Terminal:
             else:
                 print(f"Silver: cannot execute command '{command}' --> Permission denied.")
         else:
-            print(f'Silver: command "{command}" not found.')
+            try:
+                self.execute_alias(command)
+            except:
+                self.cout(f'Silver: command "{command}" not found.')
+    
+    def cout(self, message, endl="\n"):
+        self.cout(message.replace("\\","/"), end=endl)
 
     def initialise(self):
         'initialise the system.'
@@ -374,7 +451,7 @@ class Terminal:
                 owner="root",
                 group="root",
                 size=0,
-                last_modified=self.current_time,
+                last_modified=self.current_formatted_data,
                 name="root"
             )
         for filepath, dirs, files in os.walk(self.root_dir):
@@ -387,7 +464,7 @@ class Terminal:
                     owner=self.__user,
                     group=self.groups,
                     size=os.path.getsize(fullpath),
-                    last_modified=self.current_time,
+                    last_modified=self.current_formatted_data,
                     name=file
                     )
     
@@ -400,7 +477,7 @@ class Terminal:
                     owner=self.__user,
                     group=self.groups,
                     size=0,
-                    last_modified=self.current_time,
+                    last_modified=self.current_formatted_data,
                     name=dir
                     )
                 
@@ -419,7 +496,7 @@ class Terminal:
                         owner=self.__user,
                         group=self.groups,
                         size=0,
-                        last_modified=self.current_time,
+                        last_modified=self.current_formatted_data,
                         name=dir
                         )
 
@@ -472,12 +549,23 @@ class Terminal:
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         return meta[path_to_entry.replace("\\","/")]
+        
+    def get_ecosystem_data(self):
+        with open(self.filesystem, "r") as file:
+            meta = json.load(file)
+            
+        # check for every items in the ecosystem
+        # if the user has read permission to it
+        for i in list(meta):
+            if not self.allowed(os.path.join(self.kernel, i), "r", self.__user, self.groups):
+                meta.pop(i)
+        return meta
 
     ### end of kernel methods - system methods start here
 
     def create_new_file(self, path_to_file, data:dict=None, contents=""):
         'create a new file. accepts a relpath string, a parsed dict with metadata and a string of contents.'
-        print(os.path.join(self.root_dir, path_to_file))
+        self.cout(os.path.join(self.root_dir, path_to_file))
         with open(os.path.join(self.root_dir, path_to_file), "w") as file:
             file.write(contents)
         self.create_new_meta_entry(
@@ -510,9 +598,9 @@ class Terminal:
         if self.validated(os.path.join(self.current_directory, path_to_file)):
             relative_path_to_file = os.path.join(self.current_directory, path_to_file).split('kernel/', 1)[1]
             relative_new_path = os.path.join(self.current_directory, new_path).split('kernel/', 1)[1]
-            print(relative_path_to_file, relative_new_path)
+            self.cout(relative_path_to_file, relative_new_path)
             self.update_path_in_meta(relative_path_to_file, relative_new_path)
-            self.update_meta_entry(relative_new_path, "last_modified", self.current_time)
+            self.update_meta_entry(relative_new_path, "last_modified", self.current_formatted_data)
             self.update_meta_entry(relative_new_path, "name", os.path.basename(relative_new_path))
             shutil.move(os.path.join(self.current_directory, path_to_file), os.path.join(self.current_directory, new_path))
     
@@ -525,7 +613,7 @@ class Terminal:
             owner=self.get_meta_entry(path_to_file)["owner"],
             group=self.get_meta_entry(path_to_file)["group"],
             size=self.get_meta_entry(path_to_file)["size"],
-            last_modified=self.current_time,
+            last_modified=self.current_formatted_data,
             name=os.path.basename(new_path)
             )
     
@@ -563,11 +651,11 @@ class Terminal:
     
     def __pathos_bus_mkdir(self, path):
         'pathos bus method to expose the mkdir command to the bus.'
-        os.mkdir(os.path.join(self.root_dir, path))
+        os.mkdir(os.path.join(self.current_directory, path))
     
     def __pathos_bus_mkdir_p(self, path):
         'pathos bus method to expose the mkdir -p command to the bus.'
-        os.makedirs(os.path.join(self.root_dir, path))
+        os.makedirs(os.path.join(self.current_directory, path))
 
     def __pathos_bus_update_meta(self, path_to_entry, attribute, new_value):
         'pathos bus method to expose the ecosystem to the bus.'
@@ -678,7 +766,7 @@ class Terminal:
         'scripting method to write to a file'
         target = os.path.normpath(os.path.join(self.current_directory, path)).replace("\\","/")
         if not self.checkxistence(target):
-            print("A new one shall be created.")
+            self.cout("A new one shall be created.")
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.__user, self.groups):
                 raise ValueError("1: Forbidden Route")
@@ -689,7 +777,7 @@ class Terminal:
                 "owner":self.__user,
                 "group":self.groups,
                 "size":self.get_size(contents),
-                "last_modified":self.current_time,
+                "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
             with open(os.path.join(self.current_directory, path), "w") as file:
@@ -702,7 +790,7 @@ class Terminal:
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "w") as file:
                 file.write(contents)
-            self.__pathos_bus_update_meta(target, "last_modified", self.current_time)
+            self.__pathos_bus_update_meta(target, "last_modified", self.current_formatted_data)
             self.__pathos_bus_update_meta(target, "size", self.get_size(contents))
             return
         raise ValueError("2: Validation Check Failed")
@@ -715,7 +803,7 @@ class Terminal:
                 raise ValueError("1: Forbidden Route")
             with open(os.path.join(self.current_directory, path), "a") as file:
                 file.write(contents)
-            self.__pathos_bus_update_meta(target, "last_modified", self.current_time)
+            self.__pathos_bus_update_meta(target, "last_modified", self.current_formatted_data)
             self.__pathos_bus_update_meta(target, "size", self.get_size(contents))
             return
         raise ValueError("2: Validation Check Failed")
@@ -776,7 +864,7 @@ class Terminal:
                 "owner":self.__user,
                 "group":self.groups,
                 "size":0,
-                "last_modified":self.current_time,
+                "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
             self.cout("It shall be created.")
@@ -785,7 +873,7 @@ class Terminal:
             self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
             return
         else:
-            self.update_meta_entry(target, "last_modified", self.current_time)
+            self.update_meta_entry(target, "last_modified", self.current_formatted_data)
             self.cout(f"{os.path.basename(target)} touched.")
             return
     

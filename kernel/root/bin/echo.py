@@ -4,7 +4,12 @@
 
 def main(self:object, args: list[str]):
     if len(args) == 0 or "--h" in args:
-        print("///USAGE///\necho \"the world is whatever i want it to be!\"...\nechoes the provided arguments to the console.")
+        self.cout("///USAGE///\necho \"the world is whatever i want it to be!\"...\nechoes the provided arguments to the console.")
         return
-    print(" ".join(args))
+    # check if there's environment variables and
+    # replace them by their value instead
+    output = " ".join(args)
+    for i in list(self.shell_variables):
+        output = output.replace(i, str(self.shell_variables[i]))
+    self.cout(output)
     return

@@ -4,10 +4,10 @@
 
 def main(self:object, args: list[str]):
     if "--h" in args or len(args) > 0:
-        print("///USAGE///\nwhoami\nechoes the effective userid to the console.")
+        self.cout("///USAGE///\nwhoami\nechoes the effective userid to the console.")
         return
     elif self.whoami() == "root":
-        print("---YOU ARE THE ADMINISTRATOR OF THIS SYSTEM---")
+        self.cout("---YOU ARE THE ADMINISTRATOR OF THIS SYSTEM---")
         return
-    print(self.whoami())
+    self.cout(self.whoami())
     return

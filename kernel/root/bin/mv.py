@@ -1,11 +1,10 @@
 # mv - move files/rename them
 # Usage: mv [-f] item new_location
 # Move items(files or directories) across the system
-import os
 
 def main(self:object, args:list[str]):
     if len(args) < 2 or "--h" in args:
-        print("///USAGE///\nmv <-f> (item) <new_location>\nMove items(files or directories) across the system.")
+        self.cout("///USAGE///\nmv <-f> (item) <new_location>\nMove items(files or directories) across the system.")
         return
     flags = []
     for arg in args:
