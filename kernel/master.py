@@ -249,18 +249,29 @@ class Terminal:
             index = args.index("-s")
             args.pop(index)
         
-        self.__pathos_bus_shell(target_user, target_group, suppress=True)
-
-        if args:
-            command = args[0]
-            args = args[1:]
-            self.execute_command(command, args)
-
-        if retain_shell: # if the -s flag was present, retain the shell
-            self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
-            return
-        if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
-            self.__pathos_bus_shell_out(suppress=True)
+        if retain_shell: # if the -s flag was present, perform actions in a shell
+            self.__pathos_bus_shell(target_user, target_group, suppress=True)
+            if args:
+                command = args[0]
+                args = args[1:]
+                self.execute_command(command, args)
+                self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
+                return
+            if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
+                self.__pathos_bus_shell_out(suppress=True)
+        else:
+            store_user = self.__user
+            store_group = self.groups
+            self.__user = target_user
+            self.groups = target_group
+            if args:
+                command = args[0]
+                args = args[1:]
+                self.execute_command(command, args)
+                return
+            if not self.__su_success:
+                self.__user = store_user
+                self.groups = store_group
     
     def __process_su(self, args): # add the -p functionality soon (if it is not added, teleport to the previous user's directory after su)
         'process the su command.'
