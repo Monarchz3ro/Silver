@@ -249,6 +249,7 @@ class Terminal:
             index = args.index("-s")
             args.pop(index)
         
+        print("shell retain", retain_shell)
         if retain_shell: # if the -s flag was present, perform actions in a shell
             self.__pathos_bus_shell(target_user, target_group, suppress=True)
             if args:
@@ -256,9 +257,8 @@ class Terminal:
                 args = args[1:]
                 self.execute_command(command, args)
                 self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
-                return
-            if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
-                self.__pathos_bus_shell_out(suppress=True)
+                if not self.__su_success: # if the su command was not used successfully (su success is 0), exit the shell
+                    self.__pathos_bus_shell_out(suppress=True)
         else:
             store_user = self.__user
             store_group = self.groups
