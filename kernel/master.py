@@ -1,4 +1,4 @@
-import shutil, json, os
+import shutil, json
 import importlib.util
 from dataclasses import dataclass, field
 from datetime import date
@@ -194,7 +194,7 @@ class Terminal:
 
     ###all of these are kernel methods - required for the system to function properly - do not mess with these
     ###unless you know what you are doing
-            
+
     def __process_sudo(self, args):
         'process the sudo command.'
         target_user = self.__user
@@ -312,6 +312,8 @@ class Terminal:
                 self.__su_success = 0
                 return
             self.cout("---AUTHENTICATION SUCCESSFUL---")
+        else:
+            print("You're already the system administrator.")
         
         if shell_mode:
             self.__pathos_bus_shell(target_user, target_group)
