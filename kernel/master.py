@@ -268,7 +268,6 @@ class Terminal:
                 ###sudo su branch
                 if command == "su":
                     # args = args.insert(0, command) #insert the command back into the argslist so that it can be processed by the su method
-                    print(args)
                     success = self.__process_su(args)
                     if success != True: #if an error occurred, switch back to the original user
                         self.__user = store_user
@@ -288,7 +287,6 @@ class Terminal:
         authorised = self.__user == "root"
         target_user = "root" #default
         target_group = "root" #default
-        print(args, "| shell retain: ",shell_retain, " | command mode:", command_mode, " | auth: ", authorised)
 
         if shell_retain: #remove the - flag from the argslist
             index = args.index("-")
@@ -351,11 +349,11 @@ class Terminal:
         return 0
 
     
-    def __pathos_bus_shell(self, user, group, suppress=False):
+    def __pathos_bus_shell(self, target_user, target_group, user_memory=__user ,group_memory=groups,suppress=False):
         'start a new shell.'
-        self.shells.append([self.__user,self.groups,self.current_directory])
-        self.__user = user
-        self.groups = group
+        self.shells.append([user_memory,group_memory,self.current_directory])
+        self.__user = target_user
+        self.groups = target_group
         if not suppress:
             self.cout(f"---SHELL ACTIVE---\n{self.__user} is now active.")
     
