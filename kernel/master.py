@@ -196,12 +196,10 @@ class Terminal:
 
     def __process_sudo(self, args):
         'process the sudo command.'
-        self.sudo_called = 1
         target_user = self.__user
         target_group = self.groups
         if not args:
             self.cout("///USAGE/// sudo [command] [args]")
-            self.sudo_called = 0
             return
         
         user_specified = "-u" in args
@@ -218,19 +216,16 @@ class Terminal:
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
-                self.sudo_called = 0
                 return
         
         elif become_root:
             if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
-                self.sudo_called = 0
                 return
             if self.__pass_authenticated(self.__get_root_pass()):
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
-                self.sudo_called = 0
                 return
             target_user = "root"
             target_group = "root"
@@ -240,13 +235,11 @@ class Terminal:
         else:
             if self.__user == "root":
                 self.cout("///ERROR///\nYou are already the system administrator.")
-                self.sudo_called = 0
                 return
             if self.__pass_authenticated(self.__get_user_pass(self.__user, self.groups)):
                 self.cout(f"---AUTHENTICATION SUCCESSFUL---")
             else:
                 self.cout("///ERROR///\nAuthentication failed.")
-                self.sudo_called = 0
                 return
             target_user = "root"
             target_group = "root"
@@ -256,7 +249,7 @@ class Terminal:
             index = args.index("-s")
             args.pop(index)
         
-        command_mode = len(args) > 0
+        command_mode = len(args) > 0 # if there are any args left, it means that there is a command, and it is to be executed in a shell
         if command_mode:
             command = args[0]
             args = args[1:]
@@ -272,9 +265,19 @@ class Terminal:
                 store_group = self.groups
                 self.__user = target_user
                 self.groups = target_group
-                self.execute_command(command, args)
-                self.__user = store_user
-                self.groups = store_group
+                ###sudo su branch
+                if command == "su":
+                    # args = args.insert(0, command) #insert the command back into the argslist so that it can be processed by the su method
+                    print(args)
+                    success = self.__process_su(args)
+                    if success != True: #if an error occurred, switch back to the original user
+                        self.__user = store_user
+                        self.groups = store_group
+                    return #do not switch back to the original user, as the su command will have changed the user
+                else: #execute normally, because there is no su
+                    self.execute_command(command, args)
+                    self.__user = store_user
+                    self.groups = store_group
         else:
             if retain_shell: #shell out
                 self.__pathos_bus_shell(target_user, target_group)
@@ -320,11 +323,13 @@ class Terminal:
             self.__pathos_bus_shell(target_user, target_group)
             if command_mode:
                 self.execute_command(command, args_to_pass)
+            return True
         else: #simple switch
             self.__user = target_user
             self.groups = target_group
             if command_mode:
-                self.execute_command(command, args_to_pass) 
+                self.execute_command(command, args_to_pass)
+            return True 
 
     def __pathos_bus_locate_user_in_group(self, user):
         'locate the user in the group.'
