@@ -6,7 +6,7 @@ def main(self:object, args:list[str]):
     if len(args) == 0 or "--h" in args:
         self.cout("///USAGE///\ncd dir")
         return
-    target = self.joinpath(self.current_directory, args[0])
+    target = args[0]
     is_a_dir = self.isdir(target)
     if not is_a_dir:
         self.cout(f"///ERRORS///\n'{target}' isn't a directory")
