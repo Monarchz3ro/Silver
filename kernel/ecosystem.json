@@ -9,16 +9,16 @@
     },
     "root/root": {
         "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 0,
         "last_modified": "21 Feb 2024",
         "name": "root"
     },
     "root/root/.silverrc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 163,
         "last_modified": "21 Feb 2024",
         "name": ".silverrc"

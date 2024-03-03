@@ -17,7 +17,7 @@ def main(self: object, args: list[str]):
         return
     elif not paths:
         try:
-            files = self.list_directory(self.current_directory, long)
+            files = self.list_current_directory(long)
         except ValueError as e:
             self.cout(f"///ERROR///\n{e}")
             return
@@ -27,7 +27,6 @@ def main(self: object, args: list[str]):
         except ValueError as e:
             self.cout(f"///ERROR///\n{e}")
             return
-
     for spam, file in enumerate(files):
         if file == "__pycache__":
             files.pop(spam)

@@ -18,7 +18,6 @@ class Terminal:
     __kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     __default_perms: str = "rwxr-x--x"
     __current_directory = __root_dir = os.path.join(__kernel,"root").replace("\\", "/")
-    current_directory = __current_directory
     boot = os.path.join(__kernel, "root/boot/boot.bin").replace("\\", "/")
     __registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
@@ -54,10 +53,8 @@ class Terminal:
         # on the user name
         if self.__groups == "root":
             self.__current_directory = os.path.join(self.__kernel,"root/root").replace("\\", "/")
-            self.current_directory = self.__
         else:
             self.__current_directory = os.path.join(self.__kernel,f"root/home/{self.__user}").replace("\\", "/")
-        self.current_directory = self.__current_directory
 
 
     def boot_up(self):
@@ -71,7 +68,7 @@ class Terminal:
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the /boot directory. Please reinstall the system.")
             exit(1)
-            
+
     def create_default_environment_variables(self):
         self.shell_variables["$PATH"] = self.env_path_var
         self.shell_variables["$DATE"] = self.current_date
@@ -569,7 +566,7 @@ class Terminal:
         'get the metadata of an entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        return meta[path_to_entry.replace("\\","/")]
+        return meta[('root/' + path_to_entry.replace("\\","/")).replace('root/root/', 'root/')]
         
     def get_ecosystem_data(self):
         with open(self.filesystem, "r") as file:
@@ -748,7 +745,7 @@ class Terminal:
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'
-        target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.__root_dir, path)).replace("\\","/")
         if self.validated(target):
             if not self.allowed(target, "x", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
@@ -756,6 +753,9 @@ class Terminal:
                 return self.__pathos_bus_listdir_long(path)
             return self.__pathos_bus_listdir(path)
         raise ValueError("2: Validation Check Failed")
+    
+    def list_current_directory(self, long=False):
+        return self.list_directory(self.__current_directory, long)
     
     def make_directory(self, path, p=False):
         'scripting method to make directories'
