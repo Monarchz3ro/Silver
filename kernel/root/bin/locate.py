@@ -8,8 +8,8 @@ def main(self:object, args: list[str]):
         return
     occurrence_string = args[0]
     list_of_files = []
-    __ecosystem = self.get___ecosystem_data()
-    for item in list(__ecosystem):
+    ecosystem = self.get_ecosystem_data()
+    for item in list(ecosystem):
         if occurrence_string in item:
             list_of_files += [item]
 

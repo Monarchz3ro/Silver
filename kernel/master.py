@@ -18,7 +18,6 @@ class Terminal:
     __kernel:str = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
     __default_perms: str = "rwxr-x--x"
     __current_directory = __root_dir = os.path.join(__kernel,"root").replace("\\", "/")
-    current_directory = __current_directory
     boot = os.path.join(__kernel, "root/boot/boot.bin").replace("\\", "/")
     __registry:str = "registry.json"
     filesystem:str = "ecosystem.json"
@@ -54,10 +53,8 @@ class Terminal:
         # on the user name
         if self.__groups == "root":
             self.__current_directory = os.path.join(self.__kernel,"root/root").replace("\\", "/")
-            self.current_directory = self.__
         else:
             self.__current_directory = os.path.join(self.__kernel,f"root/home/{self.__user}").replace("\\", "/")
-        self.current_directory = self.__current_directory
 
 
     def boot_up(self):
@@ -65,18 +62,18 @@ class Terminal:
             with open(self.boot, "r") as file:
                 temp = file.read()
                 if temp != syscheck.pathos_boot_module:
-                    self.cout("///FATAL_CRASH.__kernel.PANIC///\nBoot file is corrupted. Please reinstall the system.")
+                    self.cout("///FATAL_CRASH.KERNEL.PANIC///\nBoot file is corrupted. Please reinstall the system.")
                     exit(1)
                 self.cout("---BOOT SUCCESSFUL---")
         else:
             self.cout("///BOOTLOADER UNDISCOVERED///\nThe boot.bin file is missing from the /boot directory. Please reinstall the system.")
             exit(1)
-            
+
     def create_default_environment_variables(self):
         self.shell_variables["$PATH"] = self.env_path_var
         self.shell_variables["$DATE"] = self.current_date
         self.shell_variables["$PRETTY_DATE"] = self.current_formatted_data
-        self.shell_variables["$__registry"] = self.__registry
+        self.shell_variables["$REGISTRY"] = self.__registry
         self.shell_variables["$FILESYSTEM"] = self.filesystem
         self.shell_variables["$BOOT"] = self.boot
         
@@ -351,8 +348,8 @@ class Terminal:
             return "root"
         with open(self.__registry, "r") as file:
             reg_object = json.load(file)
-        for group in reg_object["__groups"]:
-            if user in reg_object["__groups"][group]:
+        for group in reg_object["groups"]:
+            if user in reg_object["groups"][group]:
                 return group
         raise ValueError("Failed to locate user in group.")
     
@@ -396,14 +393,14 @@ class Terminal:
             reg_object = json.load(file)
         return reg_object["__groups"][group][user]["password"]
     
-    def get___registry(self):
-        'get the __registry of the system.'
+    def get_registry(self):
+        'get the registry of the system.'
         with open(self.__registry, "r") as file:
             return json.load(file)
         
     def get_users(self):
         'get the users of the system.'
-        return self.get___registry()["users"]
+        return self.get_registry()["users"]
 
     def checkxistence(self, path):
         'check if a file or directory exists. accepts a relpath string.'
@@ -413,7 +410,7 @@ class Terminal:
         return ret
     
     def legal(self, filepath=str):
-        """Clamp to root. accepts a relpath string. Check if the specified path is within the __root_dir. the path doesn't
+        """Clamp to root. accepts a relpath string. Check if the specified path is within the root_dir. the path doesn't
         need to point to an existing path, just check if it's valid."""
         ret = os.path.commonpath([os.path.abspath(filepath), self.__root_dir]).replace("\\","/") == self.__root_dir
         if not ret:
@@ -421,7 +418,7 @@ class Terminal:
         return ret
 
     def validated(self, filepath=str):
-        """check if the specified exists AND is within the __root_dir."""
+        """check if the specified exists AND is within the root_dir."""
         ret = self.checkxistence(filepath) and self.legal(filepath)
         return ret
         
@@ -442,7 +439,7 @@ class Terminal:
             #get the perms of the file
             with open(self.__registry, "r") as file:
                 reg_object = json.load(file)
-                grps = reg_object["__groups"]
+                grps = reg_object["groups"]
             # Check if the user is the owner
             if user == owner:
                 if action in permissions[1:4]:
@@ -462,7 +459,7 @@ class Terminal:
         return 0
         
     def sprint_through(self):
-        "standalone tool to build the cosystem.json file completely, assuming it doesn't exist in the first place or is empty."
+        "standalone tool to build the ecosystem.json file completely, assuming it doesn't exist in the first place or is empty."
         if not os.path.exists(self.filesystem):
             with open(self.filesystem, "w") as file:
                 json.dump({}, file, indent=4)
@@ -569,20 +566,20 @@ class Terminal:
         'get the metadata of an entry in the filesystem json file.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
-        return meta[path_to_entry.replace("\\","/")]
+        return meta[('root/' + path_to_entry.replace("\\","/")).replace('root/root/', 'root/')]
         
-    def get___ecosystem_data(self):
+    def get_ecosystem_data(self):
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
             
-        # check for every items in the __ecosystem
+        # check for every items in the ecosystem
         # if the user has read permission to it
         for i in list(meta):
             if not self.allowed(os.path.join(self.__kernel, i), "r", self.__user, self.__groups):
                 meta.pop(i)
         return meta
 
-    ### end of __kernel methods - system methods start here
+    ### end of kernel methods - system methods start here
 
     def create_new_file(self, path_to_file, data:dict=None, contents=""):
         'create a new file. accepts a relpath string, a parsed dict with metadata and a string of contents.'
@@ -617,8 +614,8 @@ class Terminal:
     def general_move(self, path_to_file, new_path, flags=None):
         'moves anything. accepts two relpath strings.'
         if self.validated(os.path.join(self.__current_directory, path_to_file)):
-            relative_path_to_file = os.path.join(self.__current_directory, path_to_file).split('__kernel/', 1)[1]
-            relative_new_path = os.path.join(self.__current_directory, new_path).split('__kernel/', 1)[1]
+            relative_path_to_file = os.path.join(self.__current_directory, path_to_file).split('kernel/', 1)[1]
+            relative_new_path = os.path.join(self.__current_directory, new_path).split('kernel/', 1)[1]
             self.cout(relative_path_to_file, relative_new_path)
             self.update_path_in_meta(relative_path_to_file, relative_new_path)
             self.update_meta_entry(relative_new_path, "last_modified", self.current_formatted_data)
@@ -643,7 +640,7 @@ class Terminal:
         with open(os.path.join(self.__current_directory, path_to_file).replace("\\","/"), "r") as file:
             return file.read()
     
-    ## methods that expose the __kernel to the bus
+    ## methods that expose the kernel to the bus
     
     def __pathos_bus_cd(self, path):
         'pathos bus method to expose the cd command to the bus. changes active directory of the current working system.'
@@ -679,7 +676,7 @@ class Terminal:
         os.makedirs(os.path.join(self.__current_directory, path))
 
     def __pathos_bus_update_meta(self, path_to_entry, attribute, new_value):
-        'pathos bus method to expose the __ecosystem to the bus.'
+        'pathos bus method to expose the ecosystem to the bus.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         meta[os.path.relpath(path_to_entry,self.__kernel).replace("\\","/")][attribute] = new_value
@@ -687,7 +684,7 @@ class Terminal:
             json.dump(meta, file, indent=4)
     
     def __pathos_bus_add_meta(self, path_to_entry, permissions, owner, group, size,last_modified):
-        'pathos bus method to expose the __ecosystem to the bus.'
+        'pathos bus method to expose the ecosystem to the bus.'
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         data = {
@@ -730,7 +727,7 @@ class Terminal:
                     json.dump(memory_dump, file, indent=4)
 
 
-    ## os methods - methods that serve the exposed __kernel via the bus
+    ## os methods - methods that serve the exposed kernel via the bus
     ## aka, "shit to use while scripting"
 
     def tabulate(self, table):
@@ -748,7 +745,7 @@ class Terminal:
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'
-        target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
+        target = os.path.normpath(os.path.join(self.__root_dir, path)).replace("\\","/")
         if self.validated(target):
             if not self.allowed(target, "x", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
@@ -756,6 +753,9 @@ class Terminal:
                 return self.__pathos_bus_listdir_long(path)
             return self.__pathos_bus_listdir(path)
         raise ValueError("2: Validation Check Failed")
+    
+    def list_current_directory(self, long=False):
+        return self.list_directory(self.__current_directory, long)
     
     def make_directory(self, path, p=False):
         'scripting method to make directories'
