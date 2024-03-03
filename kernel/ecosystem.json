@@ -25,15 +25,15 @@
     },
     "root/home": {
         "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 0,
         "last_modified": "21 Feb 2024",
         "name": "home"
     },
     "root/home/Miriel": {
-        "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
+        "permissions": "drwxr-x-x",
+        "owner": "Miriel",
         "group": "users",
         "size": 0,
         "last_modified": "21 Feb 2024",
@@ -41,14 +41,14 @@
     },
     "root/home/Miriel/.silverrc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
+        "owner": "Miriel",
         "group": "users",
         "size": 163,
         "last_modified": "21 Feb 2024",
         "name": ".silverrc"
     },
     "root/home/Monarch": {
-        "permissions": "drwxr-xr-x",
+        "permissions": "drwxr-x-x",
         "owner": "Monarch",
         "group": "users",
         "size": 0,
@@ -65,288 +65,296 @@
     },
     "root/bin": {
         "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 0,
         "last_modified": "21 Feb 2024",
         "name": "bin"
     },
     "root/boot": {
         "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 0,
         "last_modified": "21 Feb 2024",
         "name": "boot"
     },
     "root/bin/cd.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 593,
         "last_modified": "21 Feb 2024",
         "name": "cd.py"
     },
     "root/bin/mkdir.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 684,
         "last_modified": "21 Feb 2024",
         "name": "mkdir.py"
     },
     "root/bin/mv.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 664,
         "last_modified": "21 Feb 2024",
         "name": "mv.py"
     },
     "root/bin/uname.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 114,
         "last_modified": "21 Feb 2024",
         "name": "uname.py"
     },
     "root/bin/clear.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 134,
         "last_modified": "21 Feb 2024",
         "name": "clear.py"
     },
     "root/bin/locate.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 844,
         "last_modified": "21 Feb 2024",
         "name": "locate.py"
     },
+    "root/bin/useradd.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 844,
+        "last_modified": "3 March 2024",
+        "name": "useradd.py"
+    },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 0,
         "last_modified": "21 Feb 2024",
         "name": "__pycache__"
     },
     "root/bin/__pycache__/cd.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 674,
         "last_modified": "21 Feb 2024",
         "name": "cd.cpython-310.pyc"
     },
     "root/bin/__pycache__/ls.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 1339,
         "last_modified": "21 Feb 2024",
         "name": "ls.cpython-310.pyc"
     },
     "root/bin/__pycache__/mkdir.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 747,
         "last_modified": "21 Feb 2024",
         "name": "mkdir.cpython-310.pyc"
     },
     "root/boot/boot.bin": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 13922,
         "last_modified": "21 Feb 2024",
         "name": "boot.bin"
     },
     "root/bin/cat.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 3345,
         "last_modified": "21 Feb 2024",
         "name": "cat.py"
     },
     "root/bin/__pycache__/cat.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 1847,
         "last_modified": "21 Feb 2024",
         "name": "cat.cpython-310.pyc"
     },
     "root/bin/echo.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 611,
         "last_modified": "21 Feb 2024",
         "name": "echo.py"
     },
     "root/bin/touch.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 514,
         "last_modified": "21 Feb 2024",
         "name": "touch.py"
     },
     "root/bin/whoami.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 447,
         "last_modified": "21 Feb 2024",
         "name": "whoami.py"
     },
     "root/bin/exit.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 202,
         "last_modified": "21 Feb 2024",
         "name": "exit.py"
     },
     "root/bin/logout.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 206,
         "last_modified": "21 Feb 2024",
         "name": "logout.py"
     },
     "root/bin/pwd.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 421,
         "last_modified": "21 Feb 2024",
         "name": "pwd.py"
     },
     "root/bin/rm.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 649,
         "last_modified": "21 Feb 2024",
         "name": "rm.py"
     },
     "root/bin/ls.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 1505,
         "last_modified": "21 Feb 2024",
         "name": "ls.py"
     },
     "root/bin/test.py": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 49,
         "last_modified": "21 Feb 2024",
         "name": "test.py"
     },
     "root/bin/__pycache__/clear.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 340,
         "last_modified": "21 Feb 2024",
         "name": "clear.cpython-310.pyc"
     },
     "root/bin/__pycache__/echo.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 608,
         "last_modified": "21 Feb 2024",
         "name": "echo.cpython-310.pyc"
     },
     "root/bin/__pycache__/exit.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 417,
         "last_modified": "21 Feb 2024",
         "name": "exit.cpython-310.pyc"
     },
     "root/bin/__pycache__/locate.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 709,
         "last_modified": "21 Feb 2024",
         "name": "locate.cpython-310.pyc"
     },
     "root/bin/__pycache__/logout.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 421,
         "last_modified": "21 Feb 2024",
         "name": "logout.cpython-310.pyc"
     },
     "root/bin/__pycache__/mv.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 693,
         "last_modified": "21 Feb 2024",
         "name": "mv.cpython-310.pyc"
     },
     "root/bin/__pycache__/pwd.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 524,
         "last_modified": "21 Feb 2024",
         "name": "pwd.cpython-310.pyc"
     },
     "root/bin/__pycache__/rm.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 720,
         "last_modified": "21 Feb 2024",
         "name": "rm.cpython-310.pyc"
     },
     "root/bin/__pycache__/test.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 300,
         "last_modified": "21 Feb 2024",
         "name": "test.cpython-310.pyc"
     },
     "root/bin/__pycache__/touch.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 620,
         "last_modified": "21 Feb 2024",
         "name": "touch.cpython-310.pyc"
     },
     "root/bin/__pycache__/uname.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 342,
         "last_modified": "21 Feb 2024",
         "name": "uname.cpython-310.pyc"
     },
     "root/bin/__pycache__/whoami.cpython-310.pyc": {
         "permissions": "-rwxr-x--x",
-        "owner": "Monarch",
-        "group": "users",
+        "owner": "root",
+        "group": "root",
         "size": 554,
         "last_modified": "21 Feb 2024",
         "name": "whoami.cpython-310.pyc"

@@ -171,7 +171,7 @@ class Terminal:
                 to_execute = self.commands[command]
                 try:
                     to_execute(self, args)
-                except AttributeError:
+                except AttributeError as err:
                     print(f"///FATAL ERROR///\nmodule '{command}' is using unauthorized locked-down kernel variables")
             else:
                 print(f"Silver: cannot execute command '{command}' --> Permission denied.")
@@ -394,7 +394,7 @@ class Terminal:
             return self.__get_root_pass()
         with open(self.__registry, "r") as file:
             reg_object = json.load(file)
-        return reg_object["__groups"][group][user]["password"]
+        return reg_object["groups"][group][user]["password"]
     
     def get_registry(self):
         'get the registry of the system.'
@@ -653,6 +653,23 @@ class Terminal:
         'pathos bus method to expose the ls command to the bus.'
         return os.listdir(os.path.join(self.__root_dir, path))
     
+    def __pathos_bus_is_root(self):
+        if self.__groups == "root":
+            return True
+        return False
+        
+    def __pathos_bus_add_entry(self, entry, group):
+        'pathos bus method to create a new user entry'
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            if not group in list(reg_object["groups"]):  # if the group doesn't exists, create it
+                reg_object["groups"][group] = {}
+            reg_object["groups"][group][entry] = {}  # create the user entry
+            passwd = input(f"Password for {entry}: ")
+            reg_object["groups"][group][entry]["password"] = passwd  # create the user password
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
+
     def __pathos_bus_listdir_long(self, path):
         'pathos bus method to expose ls -l to the bus'
         files = os.listdir(os.path.join(self.__root_dir, path))
@@ -745,6 +762,13 @@ class Terminal:
             self.__pathos_bus_cd(path)
             return
         raise ValueError("2: Validation Check Failed")
+        
+    def add_user_entry(self, entry, group="users"):
+        'scripting method to create a new user entry'
+        if not self.__pathos_bus_is_root():
+            self.cout(f"///ERROR///\nDon't have permission to create user entry '{user_to_create}'.")
+        else:
+            self.__pathos_bus_add_entry(entry, group)
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'
@@ -911,7 +935,7 @@ class Terminal:
     
     def isdir(self, path):
         'scripting method to check if a path is a directory'
-        return os.path.isdir(os.path.join(self.__root_dir, path))
+        return os.path.isdir(os.path.join(self.__current_directory, path))
     
     def cout(self, message, endl="\n"):
         'scripting method to print to the terminal'
