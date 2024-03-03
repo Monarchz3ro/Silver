@@ -169,7 +169,10 @@ class Terminal:
         elif command in self.commands:
             if self.allowed(f"root/bin/{command}.py", 'x', self.__user, self.__groups):
                 to_execute = self.commands[command]
-                to_execute(self, args)
+                try:
+                    to_execute(self, args)
+                except AttributeError:
+                    print(f"///FATAL ERROR///\nmodule '{command}' is using unauthorized locked-down kernel variables")
             else:
                 print(f"Silver: cannot execute command '{command}' --> Permission denied.")
         else:
