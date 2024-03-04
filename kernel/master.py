@@ -797,6 +797,10 @@ class Terminal:
             self.cout(f"///ERROR///\nEntry '{group}:{entry}' doesn't exists.")
         else:
             self.__pathos_bus_remove_entry(entry, group)
+            
+    def change_password(self, entry, group="users"):
+        'scripting method to change an user password'
+        pass
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'

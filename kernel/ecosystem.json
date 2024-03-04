@@ -127,6 +127,14 @@
         "last_modified": "21 Feb 2024",
         "name": "locate.py"
     },
+    "root/bin/passwd.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 844,
+        "last_modified": "4 March 2024",
+        "name": "passwd.py"
+    },
     "root/bin/useradd.py": {
         "permissions": "-rwxr-x--x",
         "owner": "root",
