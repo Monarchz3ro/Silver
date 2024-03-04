@@ -3,16 +3,21 @@
 # syntax: userdel <group>:<user> - delete an user entry
 
 def main(self:object, args:list[str]):
-    if len(args) < 1 or "--h" in args:
+    if "--h" in args:
         self.cout("///USAGE///\nuserdel <group>:<user>\nDelete an user entry.")
         return
-    try:
-        user_to_delete = args[0].split(":", 1)[1]
-    except:
-        user_to_delete = args[0]
-    try:
-        user_group = args[0].split(":", 1)[0]
-    except:
-        self.remove_user_entry(user_to_delete)
-        return
-    self.remove_user_entry(user_to_delete, user_group)
+    if len(args) == 0:
+        user, group = self.get_working_entry()
+        self.change_password(user, group)
+    else:
+        single_entry = False
+        try:
+            user = args[0].split(":", 1)[1]
+        except:
+            user = args[0]
+            single_entry = True
+        if not single_entry:
+            group = args[0].split(":", 1)[0]
+            self.change_password(user, group)
+            return
+        self.change_password(user)

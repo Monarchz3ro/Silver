@@ -678,6 +678,18 @@ class Terminal:
             reg_object["groups"][group][entry]["password"] = passwd  # create the user password
         with open(self.__registry, "w") as file:
             reg_object = json.dump(reg_object, file, indent=4)
+            
+    def __pathos_bus_change_passwd(self, entry, group):
+        'pathos bus method to change an entry password'
+        with open (self.__registry, "r") as file:
+            reg_object = json.load(file)
+            passwd = input("New Password: ")
+            if entry == "root":  # if it's changing the root password
+                reg_object["root"]["password"] = passwd
+            else:
+                reg_object["groups"][group][entry]["password"] = passwd
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
 
     def __pathos_bus_remove_entry(self, entry, group):
         'pathos bus method to remove an user entry'
@@ -779,6 +791,9 @@ class Terminal:
             self.__pathos_bus_cd(path)
             return
         raise ValueError("2: Validation Check Failed")
+    
+    def get_working_entry(self):
+        return self.__user, self.__groups
         
     def add_user_entry(self, entry, group="users"):
         'scripting method to create a new user entry'
@@ -800,7 +815,23 @@ class Terminal:
             
     def change_password(self, entry, group="users"):
         'scripting method to change an user password'
-        pass
+        if (entry, group) == self.get_working_entry():  # if the user is changing is own password
+            if self.__pass_authenticated(self.__get_user_pass(entry, group)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                self.__pathos_bus_change_passwd(entry, group)
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+        else:
+            if not self.__pathos_bus_is_root():
+                if entry != "root":
+                    self.cout(f"///ERROR///\nDon't have permission to change password of entry '{group}:{entry}'.")
+                else:
+                    self.cout(f"///ERROR///\nDon't have permission to change root password.")
+            elif not self.__pathos_bus_entry_exists(entry, group) and entry != "root":
+                self.cout(f"///ERROR///\nEntry '{group}:{entry}' doesn't exists.")
+            else:
+                self.__pathos_bus_change_passwd(entry, group)
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'
