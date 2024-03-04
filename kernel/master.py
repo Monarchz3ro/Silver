@@ -657,7 +657,16 @@ class Terminal:
         if self.__groups == "root":
             return True
         return False
-        
+    
+    def __pathos_bus_entry_exists(self, entry, group):
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            if not group in list(reg_object["groups"]):
+                return False
+            elif not entry in list(reg_object["groups"][group]):
+                return False
+        return True
+    
     def __pathos_bus_add_entry(self, entry, group):
         'pathos bus method to create a new user entry'
         with open(self.__registry, "r") as file:
@@ -667,6 +676,14 @@ class Terminal:
             reg_object["groups"][group][entry] = {}  # create the user entry
             passwd = input(f"Password for {entry}: ")
             reg_object["groups"][group][entry]["password"] = passwd  # create the user password
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
+
+    def __pathos_bus_remove_entry(self, entry, group):
+        'pathos bus method to remove an user entry'
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            del reg_object["groups"][group][entry]
         with open(self.__registry, "w") as file:
             reg_object = json.dump(reg_object, file, indent=4)
 
@@ -766,9 +783,20 @@ class Terminal:
     def add_user_entry(self, entry, group="users"):
         'scripting method to create a new user entry'
         if not self.__pathos_bus_is_root():
-            self.cout(f"///ERROR///\nDon't have permission to create user entry '{user_to_create}'.")
+            self.cout(f"///ERROR///\nDon't have permission to create user entry '{group}:{entry}'.")
+        elif self.__pathos_bus_entry_exists(entry, group):
+            self.cout(f"///ERROR///\nEntry '{group}:{entry}' already exists.")
         else:
             self.__pathos_bus_add_entry(entry, group)
+    
+    def remove_user_entry(self, entry, group="users"):
+        'scripting method to delete an user entry'
+        if not self.__pathos_bus_is_root():
+            self.cout(f"///ERROR///\nDon't have permission to delete user entry '{group}:{entry}'.")
+        elif not self.__pathos_bus_entry_exists(entry, group):
+            self.cout(f"///ERROR///\nEntry '{group}:{entry}' doesn't exists.")
+        else:
+            self.__pathos_bus_remove_entry(entry, group)
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'

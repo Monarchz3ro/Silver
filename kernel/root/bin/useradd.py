@@ -1,6 +1,6 @@
 # to be plugged into the Terminal class
 # useradd - create a new user
-# syntax: useradd <user> - create a new user entry
+# syntax: useradd <group>:<user> - create a new user entry
 
 def main(self:object, args:list[str]):
     if len(args) < 1 or "--h" in args:

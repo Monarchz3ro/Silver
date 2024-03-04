@@ -135,6 +135,14 @@
         "last_modified": "3 March 2024",
         "name": "useradd.py"
     },
+    "root/bin/userdel.py": {
+        "permissions": "-rwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 844,
+        "last_modified": "4 March 2024",
+        "name": "userdel.py"
+    },
     "root/bin/__pycache__": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
