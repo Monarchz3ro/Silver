@@ -316,10 +316,13 @@ class Terminal:
             if command_mode: #remove the -c flag and the command from the argslist
                 index = args.index("-c")
                 commandslist = args[index+1:]
-                command = commandslist[0]
-                args_to_pass = commandslist[1:]
-                args.pop(index)
-                args = args[:index]     
+                if len(commandslist) > 0:
+                    command = commandslist[0]
+                    args_to_pass = commandslist[1:]
+                    args.pop(index)
+                    args = args[:index]
+                else:
+                    self.cout("///WARNING///\nFound no commands to run.")
             
             #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
             if args: #handle the user
@@ -333,7 +336,7 @@ class Terminal:
                 if not single_entry:
                     target_group = args[0].split(":", 1)[0]
             
-            if not self.__pathos_bus_entry_exists(target_user, target_group) and target_user != "root":  # if the target user doesn't exists
+            if not self.__pathos_bus_entry_exists(target_user, target_group) and target_group != "root":  # if the target user doesn't exists
                 self.cout(f"///ERROR///\nEntry '{target_group}:{target_user}' doesn't exists or isn't valid.")
                 return
             
