@@ -23,6 +23,22 @@
         "last_modified": "21 Feb 2024",
         "name": ".silverrc"
     },
+    "root/etc": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "5 Mar 2024",
+        "name": "etc"
+    },
+    "root/etc/sudoers": {
+        "permissions": "drwxr-x--x",
+        "owner": "root",
+        "group": "root",
+        "size": 0,
+        "last_modified": "5 Mar 2024",
+        "name": "sudoers"
+    },
     "root/home": {
         "permissions": "drwxr-xr-x",
         "owner": "root",
