@@ -301,52 +301,63 @@ class Terminal:
     def __process_su(self, args):
         shell_retain = "-" in args
         command_mode = "-c" in args
+        help = "--h" in args
         authorised = self.__user == "root"
         target_user = "root" #default
         target_group = "root" #default
 
-        if shell_retain: #remove the - flag from the argslist
-            index = args.index("-")
-            args.pop(index)
-        
-        if command_mode: #remove the -c flag and the command from the argslist
-            index = args.index("-c")
-            commandslist = args[index+1:]
-            command = commandslist[0]
-            args_to_pass = commandslist[1:]
-            args.pop(index)
-            args = args[:index]     
-        
-        #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
-        if args: #handle the user
-            try:
-                target_user = args[0]
-                target_group = self.__pathos_bus_locate_user_in_group(target_user)
-            except ValueError as e:
-                self.cout(f"///ERROR///\n{e}")
+        if help:
+            self.cout("///USAGE///\nsu <group>:<user> <-c> <->\nChange the effective user ID and group ID to that of <user> at <group>.")
+        else:
+            if shell_retain: #remove the - flag from the argslist
+                index = args.index("-")
+                args.pop(index)
+            
+            if command_mode: #remove the -c flag and the command from the argslist
+                index = args.index("-c")
+                commandslist = args[index+1:]
+                command = commandslist[0]
+                args_to_pass = commandslist[1:]
+                args.pop(index)
+                args = args[:index]     
+            
+            #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
+            if args: #handle the user
+                single_entry = False
+                try:
+                    target_user = args[0].split(":", 1)[1]
+                except:
+                    target_user = args[0]
+                    target_group = "users"
+                    single_entry = True
+                if not single_entry:
+                    target_group = args[0].split(":", 1)[0]
+            
+            if not self.__pathos_bus_entry_exists(target_user, target_group):  # if the target user doesn't exists
+                self.cout(f"///ERROR///\nEntry '{target_group}:{target_user}' doesn't exists or isn't valid.")
                 return
-        
-        if not authorised: #skip the password check if the user is already root
-            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
-                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-                authorised = 1
-            else:
-                self.cout("///ERROR///\nAuthentication failed.")
-                return
-        
-        if shell_retain: #shell out
-            self.__pathos_bus_shell(target_user, target_group)
-            if command_mode:
-                self.execute_command(command, args_to_pass)
-            return True
-        else: #simple switch
-            self.__user = target_user
-            self.__groups = target_group
-            if "-p" not in args:
-                self.get_current_dir()
-            if command_mode:
-                self.execute_command(command, args_to_pass)
-            return True 
+            
+            if not authorised: #skip the password check if the user is already root
+                if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                    authorised = 1
+                else:
+                    self.cout("///ERROR///\nAuthentication failed.")
+                    return
+            
+            if shell_retain: #shell out
+                self.__pathos_bus_shell(target_user, target_group)
+                if command_mode:
+                    self.execute_command(command, args_to_pass)
+                return True
+            else: #simple switch
+                self.__user = target_user
+                self.__groups = target_group
+                if "-p" not in args:
+                    self.get_current_dir()
+                if command_mode:
+                    self.execute_command(command, args_to_pass)
+                return True 
 
     def __pathos_bus_locate_user_in_group(self, user):
         'locate the user in the group.'
