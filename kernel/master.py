@@ -786,7 +786,7 @@ class Terminal:
         'scripting method to change directories'
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "x", self.__user, self.__groups):
+            if not self.allowed(target, "r", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_cd(path)
             return

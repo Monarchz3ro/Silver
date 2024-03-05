@@ -8,7 +8,7 @@
         "name": "root"
     },
     "root/root": {
-        "permissions": "drwxr-xr-x",
+        "permissions": "drwxr-x--x",
         "owner": "root",
         "group": "root",
         "size": 0,
