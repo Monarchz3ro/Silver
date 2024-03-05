@@ -188,7 +188,10 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.__user.lower()}@PathOS:{self.__current_directory[to_strip:]}/ $ "
+            permission_sign = "$"
+            if self.__groups == "root":
+                permission_sign = "#"
+            dir_prompt:str = f"{self.__user.lower()}@PathOS:{self.__current_directory[to_strip:]}/ {permission_sign} "
             self.cout(dir_prompt,endl="")
             comm = input()
             if not comm:
