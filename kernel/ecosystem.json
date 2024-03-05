@@ -132,7 +132,7 @@
         "owner": "root",
         "group": "root",
         "size": 844,
-        "last_modified": "4 March 2024",
+        "last_modified": "4 Mar 2024",
         "name": "passwd.py"
     },
     "root/bin/useradd.py": {
@@ -140,7 +140,7 @@
         "owner": "root",
         "group": "root",
         "size": 844,
-        "last_modified": "3 March 2024",
+        "last_modified": "3 Mar 2024",
         "name": "useradd.py"
     },
     "root/bin/userdel.py": {
@@ -148,7 +148,7 @@
         "owner": "root",
         "group": "root",
         "size": 844,
-        "last_modified": "4 March 2024",
+        "last_modified": "4 Mar 2024",
         "name": "userdel.py"
     },
     "root/bin/__pycache__": {
