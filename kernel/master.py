@@ -408,10 +408,10 @@ class Terminal:
         'get the users of the system.'
         return self.get_registry()["users"]
 
-    def checkxistence(self, path):
+    def checkxistence(self, path, verbose=True):
         'check if a file or directory exists. accepts a relpath string.'
         ret = os.path.exists(os.path.join(self.__root_dir, path))
-        if not ret:
+        if not ret and verbose:
             self.cout(f"Path given does not exist.")
         return ret
     
@@ -505,8 +505,10 @@ class Terminal:
                     name=dir
                     )
                 
-    def detect_new_dirs(self):
+    def detect_new_dirs(self, owner="", group="", permissions="drwxr-xr-x"):
         'detect new directories and add them to the filesystem json file.'
+        if owner == "" and group == "":
+            owner, group == self.__user, self.__group
         with open(self.filesystem, "r") as file:
             meta = json.load(file)
         for filepath, dirs, _ in os.walk(self.__root_dir):
@@ -516,9 +518,9 @@ class Terminal:
                 if relative_path not in meta:
                     self.create_new_meta_entry(
                         path_to_entry=relative_path.replace("\\", "/"),
-                        permissions="drwxr-xr-x",
-                        owner=self.__user,
-                        group=self.__groups,
+                        permissions=permissions,
+                        owner=owner,
+                        group=group,
                         size=0,
                         last_modified=self.current_formatted_data,
                         name=dir
@@ -806,6 +808,24 @@ class Terminal:
             self.cout(f"///ERROR///\nEntry '{group}:{entry}' already exists.")
         else:
             self.__pathos_bus_add_entry(entry, group)
+            try:
+                self.make_directory(os.path.join(self.__root_dir, f"home/{entry}"), owner=entry, group=group, permissions="drwxr-x--x")
+                self.touch(os.path.join(self.__root_dir, f"home/{entry}/.silverrc"), verbose=False, owner=entry, group=group, permissions="drwxr-x--x")
+                with open (os.path.join(self.__root_dir, f"home/{entry}/.silverrc"), "w") as file:
+                    default_content = """# .pathosrc
+
+# User specific environment
+
+PATH='/bin/'
+
+# User specific aliases and functions
+
+alias ll='ls -l'
+alias la='ls -l -a'
+alias rmdir='rm -r'"""
+                    file.write(default_content)
+            except Exception as e:
+                self.cout(f"///WARNING///\n{e}")        
     
     def remove_user_entry(self, entry, group="users"):
         'scripting method to delete an user entry'
@@ -850,8 +870,10 @@ class Terminal:
     def list_current_directory(self, long=False):
         return self.list_directory(self.__current_directory, long)
     
-    def make_directory(self, path, p=False):
+    def make_directory(self, path, p=False, owner="", group="", permissions="drwxr-xr-x"):
         'scripting method to make directories'
+        if owner == "" and group == "":
+            onwer, group = self.__user, self.__group
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
         parent_to_target = os.path.dirname(target)
         if self.legal(target):
@@ -861,7 +883,7 @@ class Terminal:
                 self.__pathos_bus_mkdir_p(path) 
             else:
                 self.__pathos_bus_mkdir(path)
-            self.detect_new_dirs()
+            self.detect_new_dirs(owner, group, permissions)
             return
         raise ValueError("3: Virtualisation Breakthrough Suppressed")
     
@@ -887,7 +909,7 @@ class Terminal:
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
+                "permissions":f"-{self.__default_perms}",
                 "owner":self.__user,
                 "group":self.__groups,
                 "size":self.get_size(contents),
@@ -964,31 +986,37 @@ class Terminal:
             return
         raise ValueError("2: Validation Check Failed")
     
-    def touch(self, path):
+    def touch(self, path, verbose=True, owner="", group="", permissions=""):
         'scripting method to create a new file'
+        if permissions == "":
+            permissions = f"-{self.__default_perms}"
+        if owner == "" and group == "":
+            owner, group = self.__user, self.__group
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
-        if not self.checkxistence(target):
+        if not self.checkxistence(target, verbose=verbose):
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
-                "owner":self.__user,
-                "group":self.__groups,
+                "permissions":permissions,
+                "owner":owner,
+                "group":group,
                 "size":0,
                 "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
-            self.cout("It shall be created.")
+            if verbose:
+                self.cout("It shall be created.")
             with open(os.path.join(self.__current_directory, path), "w") as file:
                 file.write("")
             self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
             return
         else:
             self.update_meta_entry(target, "last_modified", self.current_formatted_data)
-            self.cout(f"{os.path.basename(target)} touched.")
+            if verbose:
+                self.cout(f"{os.path.basename(target)} touched.")
             return
     
     def whoami(self):
