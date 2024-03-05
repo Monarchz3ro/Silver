@@ -158,6 +158,11 @@ class Terminal:
         for file in os.listdir(self.env_path_var):
             if file.endswith(".py"):
                 module = file[:-3]
+                with open (f"{self.env_path_var}/{file}", "r") as f:
+                    for line in f.readlines():
+                        if line.count('with open(') > 0:
+                            self.cout(f"///WARNING///\n{module} module contains manual file open statements.\nSkipping to minimize risks of system compromise.")
+                            continue
                 try:
                     spec = importlib.util.spec_from_file_location(module, f"{self.env_path_var}/{file}")
                     mod = importlib.util.module_from_spec(spec)
