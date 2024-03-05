@@ -163,7 +163,7 @@ class Terminal:
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
                     if self.__has_imports(mod):
-                        self.cout(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
+                        self.cout(f"///WARNING///\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
                         continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
