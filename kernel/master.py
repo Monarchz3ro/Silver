@@ -333,7 +333,7 @@ class Terminal:
                 if not single_entry:
                     target_group = args[0].split(":", 1)[0]
             
-            if not self.__pathos_bus_entry_exists(target_user, target_group):  # if the target user doesn't exists
+            if not self.__pathos_bus_entry_exists(target_user, target_group) and target_user != "root":  # if the target user doesn't exists
                 self.cout(f"///ERROR///\nEntry '{target_group}:{target_user}' doesn't exists or isn't valid.")
                 return
             
