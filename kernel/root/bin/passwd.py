@@ -1,10 +1,10 @@
 # to be plugged into the Terminal class
-# userdel - delete an existing user
-# syntax: userdel <group>:<user> - delete an user entry
+# passwd - change the password of an entry
+# syntax: passwd <group>:<user> - change an user entry password
 
 def main(self:object, args:list[str]):
     if "--h" in args:
-        self.cout("///USAGE///\nuserdel <group>:<user>\nDelete an user entry.")
+        self.cout("///USAGE///\npasswd <group>:<user>\nChange an user entry password.")
         return
     if len(args) == 0:
         user, group = self.get_working_entry()
