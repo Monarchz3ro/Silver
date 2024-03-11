@@ -20,7 +20,8 @@ class Terminal:
     __current_directory = __root_dir = os.path.join(__kernel,"root").replace("\\", "/")
     boot = os.path.join(__kernel, "root/boot/boot.bin").replace("\\", "/")
     __registry:str = "registry.json"
-    filesystem:str = "ecosystem.json"
+    __filesystem:str = "ecosystem.json"
+    sudoers:str = os.path.join(__kernel, "root/etc/sudoers").replace("\\", "/")
     current_date: str = date.today()
     current_formatted_data:str = current_date.strftime("%d %b %Y")
     clipout: str = __root_dir.replace("\\", "/")
@@ -43,6 +44,7 @@ class Terminal:
         self.create_default_environment_variables()
         self.load_shell_config()
         self.load_commands()
+        self.get_sudoers()  # check if the sudoers file is valid
         os.chdir(self.__kernel)
         self.cout(f"PathOS is live and at your disposal.")
         self.initialise()
@@ -55,6 +57,14 @@ class Terminal:
             self.__current_directory = os.path.join(self.__kernel,"root/root").replace("\\", "/")
         else:
             self.__current_directory = os.path.join(self.__kernel,f"root/home/{self.__user}").replace("\\", "/")
+            
+    def get_sudoers(self):
+        try:
+            with open(self.sudoers, "r") as file:
+                reg_object = json.load(file)
+                return reg_object["sudoers"]
+        except Exception as e:
+            self.cout(f"///CRITICAL ERROR///\nAn error occurred when initializing sudoers file at '/etc/sudoers':\n{e}")
 
 
     def boot_up(self):
@@ -74,9 +84,9 @@ class Terminal:
         self.shell_variables["$DATE"] = self.current_date
         self.shell_variables["$PRETTY_DATE"] = self.current_formatted_data
         self.shell_variables["$REGISTRY"] = self.__registry
-        self.shell_variables["$FILESYSTEM"] = self.filesystem
+        self.shell_variables["$FILESYSTEM"] = self.__filesystem
         self.shell_variables["$BOOT"] = self.boot
-        
+        self.shell_variables["$SHELL"] = "Silver"
             
     def load_shell_config(self):
         with open(os.path.join(self.__root_dir, self.shell_config)) as f:
@@ -148,12 +158,17 @@ class Terminal:
         for file in os.listdir(self.env_path_var):
             if file.endswith(".py"):
                 module = file[:-3]
+                with open (f"{self.env_path_var}/{file}", "r") as f:
+                    for line in f.readlines():
+                        if line.count('with open(') > 0:
+                            self.cout(f"///WARNING///\n{module} module contains manual file open statements.\nSkipping to minimize risks of system compromise.")
+                            continue
                 try:
                     spec = importlib.util.spec_from_file_location(module, f"{self.env_path_var}/{file}")
                     mod = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(mod)
                     if self.__has_imports(mod):
-                        self.cout(f"!!!FATAL ERROR!!!\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
+                        self.cout(f"///WARNING///\n{module} module contains import statements.\nSkipping to minimize risks of system compromise.")
                         continue
                     if hasattr(mod, "main") and callable(mod.main):
                         self.commands[module] = mod.main
@@ -169,7 +184,10 @@ class Terminal:
         elif command in self.commands:
             if self.allowed(f"root/bin/{command}.py", 'x', self.__user, self.__groups):
                 to_execute = self.commands[command]
-                to_execute(self, args)
+                try:
+                    to_execute(self, args)
+                except AttributeError as err:
+                    print(f"///FATAL ERROR///\nmodule '{command}' is using unauthorized locked-down kernel variables")
             else:
                 print(f"Silver: cannot execute command '{command}' --> Permission denied.")
         else:
@@ -185,7 +203,10 @@ class Terminal:
         'initialise the system.'
         while True:
             to_strip = len(self.clipout)
-            dir_prompt:str = f"{self.__user.lower()}@PathOS:{self.__current_directory[to_strip:].lower()}/ $ "
+            permission_sign = "$"
+            if self.__groups == "root":
+                permission_sign = "#"
+            dir_prompt:str = f"{self.__user.lower()}@PathOS:{self.__current_directory[to_strip:]}/ {permission_sign} "
             self.cout(dir_prompt,endl="")
             comm = input()
             if not comm:
@@ -209,138 +230,157 @@ class Terminal:
         'process the sudo command.'
         target_user = self.__user
         target_group = self.__groups
-        if not args:
-            self.cout("///USAGE/// sudo [command] [args]")
+        sudoers = self.get_sudoers()
+        if f"{self.__groups}:{self.__user}" not in sudoers:
+            self.cout("///ERROR///\nYou are not in the sudoers file! Aborting sudo process.")
             return
-        
-        user_specified = "-u" in args
-        retain_shell = "-s" in args
-        become_root = "-i" in args
-
-        if user_specified:
-            index = args.index("-u")
-            target_user = args[index+1]
-            target_group = self.__pathos_bus_locate_user_in_group(target_user)
-            args.pop(index+1)
-            args.pop(index)
-            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
-                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-            else:
-                self.cout("///ERROR///\nAuthentication failed.")
-                return
-        
-        elif become_root:
-            if self.__user == "root":
-                self.cout("///ERROR///\nYou are already the system administrator.")
-                return
-            if self.__pass_authenticated(self.__get_root_pass()):
-                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-            else:
-                self.cout("///ERROR///\nAuthentication failed.")
-                return
-            target_user = "root"
-            target_group = "root"
-            index = args.index("-i")
-            args.pop(index)
-
         else:
-            if self.__user == "root":
-                self.cout("///ERROR///\nYou are already the system administrator.")
+            if not args:
+                self.cout("///USAGE/// sudo [command] [args]")
                 return
-            if self.__pass_authenticated(self.__get_user_pass(self.__user, self.__groups)):
-                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-            else:
-                self.cout("///ERROR///\nAuthentication failed.")
-                return
-            target_user = "root"
-            target_group = "root"
             
+            user_specified = "-u" in args
+            retain_shell = "-s" in args
+            become_root = "-i" in args
 
-        if retain_shell: # if the -s flag was present, perform actions in a shell
-            index = args.index("-s")
-            args.pop(index)
-        
-        command_mode = len(args) > 0 # if there are any args left, it means that there is a command, and it is to be executed in a shell
-        if command_mode:
-            command = args[0]
-            args = args[1:]
+            if user_specified:
+                index = args.index("-u")
+                target_user = args[index+1]
+                target_group = self.__pathos_bus_locate_user_in_group(target_user)
+                args.pop(index+1)
+                args.pop(index)
+                if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                else:
+                    self.cout("///ERROR///\nAuthentication failed.")
+                    return
+            
+            elif become_root:
+                if self.__user == "root":
+                    self.cout("///ERROR///\nYou are already the system administrator.")
+                    return
+                if self.__pass_authenticated(self.__get_root_pass()):
+                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                else:
+                    self.cout("///ERROR///\nAuthentication failed.")
+                    return
+                target_user = "root"
+                target_group = "root"
+                index = args.index("-i")
+                args.pop(index)
 
-            #from this point on, branch out to see if a simple switch is required
-            #or if the command is to be executed in a shell
+            else:
+                if self.__user == "root":
+                    self.cout("///ERROR///\nYou are already the system administrator.")
+                    return
+                if self.__pass_authenticated(self.__get_user_pass(self.__user, self.__groups)):
+                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                else:
+                    self.cout("///ERROR///\nAuthentication failed.")
+                    return
+                target_user = "root"
+                target_group = "root"
+                
 
-            if retain_shell: #shell out
-                self.__pathos_bus_shell(target_user, target_group)
-                self.execute_command(command, args)
-            else: #simple switch
-                store_user = self.__user
-                store_group = self.__groups
-                self.__user = target_user
-                self.__groups = target_group
-                ###sudo su branch
-                if command == "su":
-                    # args = args.insert(0, command) #insert the command back into the argslist so that it can be processed by the su method
-                    success = self.__process_su(args)
-                    if success != True: #if an error occurred, switch back to the original user
+            if retain_shell: # if the -s flag was present, perform actions in a shell
+                index = args.index("-s")
+                args.pop(index)
+            
+            command_mode = len(args) > 0 # if there are any args left, it means that there is a command, and it is to be executed in a shell
+            if command_mode:
+                command = args[0]
+                args = args[1:]
+
+                #from this point on, branch out to see if a simple switch is required
+                #or if the command is to be executed in a shell
+
+                if retain_shell: #shell out
+                    self.__pathos_bus_shell(target_user, target_group)
+                    self.execute_command(command, args)
+                else: #simple switch
+                    store_user = self.__user
+                    store_group = self.__groups
+                    self.__user = target_user
+                    self.__groups = target_group
+                    ###sudo su branch
+                    if command == "su":
+                        # args = args.insert(0, command) #insert the command back into the argslist so that it can be processed by the su method
+                        success = self.__process_su(args)
+                        if success != True: #if an error occurred, switch back to the original user
+                            self.__user = store_user
+                            self.__groups = store_group
+                        return #do not switch back to the original user, as the su command will have changed the user
+                    else: #execute normally, because there is no su
+                        self.execute_command(command, args)
                         self.__user = store_user
                         self.__groups = store_group
-                    return #do not switch back to the original user, as the su command will have changed the user
-                else: #execute normally, because there is no su
-                    self.execute_command(command, args)
-                    self.__user = store_user
-                    self.__groups = store_group
-        else:
-            if retain_shell: #shell out
-                self.__pathos_bus_shell(target_user, target_group)
+            else:
+                if retain_shell: #shell out
+                    self.__pathos_bus_shell(target_user, target_group)
 
     def __process_su(self, args):
         shell_retain = "-" in args
         command_mode = "-c" in args
+        help = "--h" in args
         authorised = self.__user == "root"
         target_user = "root" #default
         target_group = "root" #default
 
-        if shell_retain: #remove the - flag from the argslist
-            index = args.index("-")
-            args.pop(index)
-        
-        if command_mode: #remove the -c flag and the command from the argslist
-            index = args.index("-c")
-            commandslist = args[index+1:]
-            command = commandslist[0]
-            args_to_pass = commandslist[1:]
-            args.pop(index)
-            args = args[:index]     
-        
-        #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
-        if args: #handle the user
-            try:
-                target_user = args[0]
-                target_group = self.__pathos_bus_locate_user_in_group(target_user)
-            except ValueError as e:
-                self.cout(f"///ERROR///\n{e}")
+        if help:
+            self.cout("///USAGE///\nsu <group>:<user> <-c> <->\nChange the effective user ID and group ID to that of <user> at <group>.")
+        else:
+            if shell_retain: #remove the - flag from the argslist
+                index = args.index("-")
+                args.pop(index)
+            
+            if command_mode: #remove the -c flag and the command from the argslist
+                index = args.index("-c")
+                commandslist = args[index+1:]
+                if len(commandslist) > 0:
+                    command = commandslist[0]
+                    args_to_pass = commandslist[1:]
+                    args.pop(index)
+                    args = args[:index]
+                else:
+                    self.cout("///WARNING///\nFound no commands to run.")
+            
+            #args is now the target user because every other option was cleaned from the argslist. if there is no args, the target user is root
+            if args: #handle the user
+                single_entry = False
+                try:
+                    target_user = args[0].split(":", 1)[1]
+                except:
+                    target_user = args[0]
+                    target_group = "users"
+                    single_entry = True
+                if not single_entry:
+                    target_group = args[0].split(":", 1)[0]
+            
+            if not self.__pathos_bus_entry_exists(target_user, target_group) and target_group != "root":  # if the target user doesn't exists
+                self.cout(f"///ERROR///\nEntry '{target_group}:{target_user}' doesn't exists or isn't valid.")
                 return
-        
-        if not authorised: #skip the password check if the user is already root
-            if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
-                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
-                authorised = 1
-            else:
-                self.cout("///ERROR///\nAuthentication failed.")
-                return
-        
-        if shell_retain: #shell out
-            self.__pathos_bus_shell(target_user, target_group)
-            if command_mode:
-                self.execute_command(command, args_to_pass)
-            return True
-        else: #simple switch
-            self.__user = target_user
-            self.__groups = target_group
-            if "-p" not in args:
-                self.get_current_dir()
-            if command_mode:
-                self.execute_command(command, args_to_pass)
-            return True 
+            
+            if not authorised: #skip the password check if the user is already root
+                if self.__pass_authenticated(self.__get_user_pass(target_user, target_group)):
+                    self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                    authorised = 1
+                else:
+                    self.cout("///ERROR///\nAuthentication failed.")
+                    return
+            
+            if shell_retain: #shell out
+                self.__pathos_bus_shell(target_user, target_group)
+                if command_mode:
+                    self.execute_command(command, args_to_pass)
+                return True
+            else: #simple switch
+                self.__user = target_user
+                self.__groups = target_group
+                if "-p" not in args:
+                    self.get_current_dir()
+                if command_mode:
+                    self.execute_command(command, args_to_pass)
+                return True 
 
     def __pathos_bus_locate_user_in_group(self, user):
         'locate the user in the group.'
@@ -391,7 +431,7 @@ class Terminal:
             return self.__get_root_pass()
         with open(self.__registry, "r") as file:
             reg_object = json.load(file)
-        return reg_object["__groups"][group][user]["password"]
+        return reg_object["groups"][group][user]["password"]
     
     def get_registry(self):
         'get the registry of the system.'
@@ -402,10 +442,10 @@ class Terminal:
         'get the users of the system.'
         return self.get_registry()["users"]
 
-    def checkxistence(self, path):
+    def checkxistence(self, path, verbose=True):
         'check if a file or directory exists. accepts a relpath string.'
         ret = os.path.exists(os.path.join(self.__root_dir, path))
-        if not ret:
+        if not ret and verbose:
             self.cout(f"Path given does not exist.")
         return ret
     
@@ -427,7 +467,7 @@ class Terminal:
         filepath = os.path.relpath(filepath, self.__kernel).replace("\\", "/")
         if user == "root":
             return 1
-        with open(self.filesystem, "r") as meta:
+        with open(self.__filesystem, "r") as meta:
             data = json.load(meta)
         # Check if the path exists in the data
         if filepath in data:
@@ -460,8 +500,8 @@ class Terminal:
         
     def sprint_through(self):
         "standalone tool to build the ecosystem.json file completely, assuming it doesn't exist in the first place or is empty."
-        if not os.path.exists(self.filesystem):
-            with open(self.filesystem, "w") as file:
+        if not os.path.exists(self.__filesystem):
+            with open(self.__filesystem, "w") as file:
                 json.dump({}, file, indent=4)
         self.create_new_meta_entry(
                 path_to_entry="root",
@@ -499,9 +539,11 @@ class Terminal:
                     name=dir
                     )
                 
-    def detect_new_dirs(self):
+    def detect_new_dirs(self, owner="", group="", permissions="drwxr-xr-x"):
         'detect new directories and add them to the filesystem json file.'
-        with open(self.filesystem, "r") as file:
+        if owner == "" and group == "":
+            owner, group == self.__user, self.__group
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         for filepath, dirs, _ in os.walk(self.__root_dir):
             for dir in dirs:
@@ -510,9 +552,9 @@ class Terminal:
                 if relative_path not in meta:
                     self.create_new_meta_entry(
                         path_to_entry=relative_path.replace("\\", "/"),
-                        permissions="drwxr-xr-x",
-                        owner=self.__user,
-                        group=self.__groups,
+                        permissions=permissions,
+                        owner=owner,
+                        group=group,
                         size=0,
                         last_modified=self.current_formatted_data,
                         name=dir
@@ -520,7 +562,7 @@ class Terminal:
 
     def create_new_meta_entry(self, path_to_entry, permissions, owner,group,size, last_modified, name):
         'create a new entry in the filesystem json file. the file must not exist before calling this method.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         data = {
             "permissions": permissions,
@@ -531,7 +573,7 @@ class Terminal:
             "name": name
         }
         meta[path_to_entry] = data
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
     def get_size(self, content:str):
@@ -540,36 +582,36 @@ class Terminal:
 
     def update_meta_entry(self, path_to_entry, attribute, new_value):
         'update an attribute of an existing entry in the filesystem json file.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         meta[os.path.relpath(path_to_entry,self.__kernel).replace("\\","/")][attribute] = new_value
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
     def delete_meta_entry(self, path_to_entry):
         'delete an entry from the filesystem json file.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         del meta[path_to_entry]
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
 
     def update_path_in_meta(self, old_path, new_path):
         'update the path of an entry in the filesystem json file.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         meta[new_path] = meta.pop(old_path)
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
     
     def get_meta_entry(self, path_to_entry):
         'get the metadata of an entry in the filesystem json file.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         return meta[('root/' + path_to_entry.replace("\\","/")).replace('root/root/', 'root/')]
         
     def get_ecosystem_data(self):
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
             
         # check for every items in the ecosystem
@@ -650,6 +692,52 @@ class Terminal:
         'pathos bus method to expose the ls command to the bus.'
         return os.listdir(os.path.join(self.__root_dir, path))
     
+    def __pathos_bus_is_root(self):
+        if self.__groups == "root":
+            return True
+        return False
+    
+    def __pathos_bus_entry_exists(self, entry, group):
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            if not group in list(reg_object["groups"]):
+                return False
+            elif not entry in list(reg_object["groups"][group]):
+                return False
+        return True
+    
+    def __pathos_bus_add_entry(self, entry, group):
+        'pathos bus method to create a new user entry'
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            if not group in list(reg_object["groups"]):  # if the group doesn't exists, create it
+                reg_object["groups"][group] = {}
+            reg_object["groups"][group][entry] = {}  # create the user entry
+            passwd = input(f"Password for {entry}: ")
+            reg_object["groups"][group][entry]["password"] = passwd  # create the user password
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
+            
+    def __pathos_bus_change_passwd(self, entry, group):
+        'pathos bus method to change an entry password'
+        with open (self.__registry, "r") as file:
+            reg_object = json.load(file)
+            passwd = input("New Password: ")
+            if entry == "root":  # if it's changing the root password
+                reg_object["root"]["password"] = passwd
+            else:
+                reg_object["groups"][group][entry]["password"] = passwd
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
+
+    def __pathos_bus_remove_entry(self, entry, group):
+        'pathos bus method to remove an user entry'
+        with open(self.__registry, "r") as file:
+            reg_object = json.load(file)
+            del reg_object["groups"][group][entry]
+        with open(self.__registry, "w") as file:
+            reg_object = json.dump(reg_object, file, indent=4)
+
     def __pathos_bus_listdir_long(self, path):
         'pathos bus method to expose ls -l to the bus'
         files = os.listdir(os.path.join(self.__root_dir, path))
@@ -677,15 +765,15 @@ class Terminal:
 
     def __pathos_bus_update_meta(self, path_to_entry, attribute, new_value):
         'pathos bus method to expose the ecosystem to the bus.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         meta[os.path.relpath(path_to_entry,self.__kernel).replace("\\","/")][attribute] = new_value
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
     
     def __pathos_bus_add_meta(self, path_to_entry, permissions, owner, group, size,last_modified):
         'pathos bus method to expose the ecosystem to the bus.'
-        with open(self.filesystem, "r") as file:
+        with open(self.__filesystem, "r") as file:
             meta = json.load(file)
         data = {
             "permissions": permissions,
@@ -696,7 +784,7 @@ class Terminal:
             "name": os.path.basename(path_to_entry)
         }
         meta[os.path.relpath(path_to_entry,self.__kernel).replace("\\","/")] = data
-        with open(self.filesystem, "w") as file:
+        with open(self.__filesystem, "w") as file:
             json.dump(meta, file, indent=4)
     
     def __pathos_bus_remove(self, path, r=False):
@@ -710,7 +798,7 @@ class Terminal:
             except Exception as e:
                 self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
         else: # (if r)
-            with open(self.filesystem, "r") as file:
+            with open(self.__filesystem, "r") as file:
                 memory_dump = json.load(file)
             try:
                 for filepath, drs, files in os.walk(os.path.join(self.__current_directory, path)):
@@ -723,7 +811,7 @@ class Terminal:
                 self.delete_meta_entry(path)
             except Exception as e:
                 self.cout("///ERROR///\nInvalid input for provided args.\n"+str(e))
-                with open(self.filesystem, "w") as file:
+                with open(self.__filesystem, "w") as file:
                     json.dump(memory_dump, file, indent=4)
 
 
@@ -737,11 +825,70 @@ class Terminal:
         'scripting method to change directories'
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
         if self.validated(target):
-            if not self.allowed(target, "x", self.__user, self.__groups):
+            if not self.allowed(target, "r", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
             self.__pathos_bus_cd(path)
             return
         raise ValueError("2: Validation Check Failed")
+    
+    def get_working_entry(self):
+        return self.__user, self.__groups
+        
+    def add_user_entry(self, entry, group="users"):
+        'scripting method to create a new user entry'
+        if not self.__pathos_bus_is_root():
+            self.cout(f"///ERROR///\nDon't have permission to create user entry '{group}:{entry}'.")
+        elif self.__pathos_bus_entry_exists(entry, group):
+            self.cout(f"///ERROR///\nEntry '{group}:{entry}' already exists.")
+        else:
+            self.__pathos_bus_add_entry(entry, group)
+            try:
+                self.make_directory(os.path.join(self.__root_dir, f"home/{entry}"), owner=entry, group=group, permissions="drwxr-x--x")
+                self.touch(os.path.join(self.__root_dir, f"home/{entry}/.silverrc"), verbose=False, owner=entry, group=group, permissions="drwxr-x--x")
+                with open (os.path.join(self.__root_dir, f"home/{entry}/.silverrc"), "w") as file:
+                    default_content = """# .pathosrc
+
+# User specific environment
+
+PATH='/bin/'
+
+# User specific aliases and functions
+
+alias ll='ls -l'
+alias la='ls -l -a'
+alias rmdir='rm -r'"""
+                    file.write(default_content)
+            except Exception as e:
+                self.cout(f"///WARNING///\n{e}")        
+    
+    def remove_user_entry(self, entry, group="users"):
+        'scripting method to delete an user entry'
+        if not self.__pathos_bus_is_root():
+            self.cout(f"///ERROR///\nDon't have permission to delete user entry '{group}:{entry}'.")
+        elif not self.__pathos_bus_entry_exists(entry, group):
+            self.cout(f"///ERROR///\nEntry '{group}:{entry}' doesn't exists.")
+        else:
+            self.__pathos_bus_remove_entry(entry, group)
+            
+    def change_password(self, entry, group="users"):
+        'scripting method to change an user password'
+        if (entry, group) == self.get_working_entry():  # if the user is changing is own password
+            if self.__pass_authenticated(self.__get_user_pass(entry, group)):
+                self.cout(f"---AUTHENTICATION SUCCESSFUL---")
+                self.__pathos_bus_change_passwd(entry, group)
+            else:
+                self.cout("///ERROR///\nAuthentication failed.")
+                return
+        else:
+            if not self.__pathos_bus_is_root():
+                if entry != "root":
+                    self.cout(f"///ERROR///\nDon't have permission to change password of entry '{group}:{entry}'.")
+                else:
+                    self.cout(f"///ERROR///\nDon't have permission to change root password.")
+            elif not self.__pathos_bus_entry_exists(entry, group) and entry != "root":
+                self.cout(f"///ERROR///\nEntry '{group}:{entry}' doesn't exists.")
+            else:
+                self.__pathos_bus_change_passwd(entry, group)
     
     def list_directory(self, path, long=False):
         'scripting method to list directories'
@@ -757,8 +904,10 @@ class Terminal:
     def list_current_directory(self, long=False):
         return self.list_directory(self.__current_directory, long)
     
-    def make_directory(self, path, p=False):
+    def make_directory(self, path, p=False, owner="", group="", permissions="drwxr-xr-x"):
         'scripting method to make directories'
+        if owner == "" and group == "":
+            onwer, group = self.__user, self.__group
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
         parent_to_target = os.path.dirname(target)
         if self.legal(target):
@@ -768,7 +917,7 @@ class Terminal:
                 self.__pathos_bus_mkdir_p(path) 
             else:
                 self.__pathos_bus_mkdir(path)
-            self.detect_new_dirs()
+            self.detect_new_dirs(owner, group, permissions)
             return
         raise ValueError("3: Virtualisation Breakthrough Suppressed")
     
@@ -794,7 +943,7 @@ class Terminal:
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
+                "permissions":f"-{self.__default_perms}",
                 "owner":self.__user,
                 "group":self.__groups,
                 "size":self.get_size(contents),
@@ -871,31 +1020,37 @@ class Terminal:
             return
         raise ValueError("2: Validation Check Failed")
     
-    def touch(self, path):
+    def touch(self, path, verbose=True, owner="", group="", permissions=""):
         'scripting method to create a new file'
+        if permissions == "":
+            permissions = f"-{self.__default_perms}"
+        if owner == "" and group == "":
+            owner, group = self.__user, self.__group
         target = os.path.normpath(os.path.join(self.__current_directory, path)).replace("\\","/")
-        if not self.checkxistence(target):
+        if not self.checkxistence(target, verbose=verbose):
             parent_to_target = os.path.dirname(target)
             if not self.allowed(parent_to_target, "w", self.__user, self.__groups):
                 raise ValueError("1: Forbidden Route")
             elif not self.legal(target):
                 raise ValueError("3: Virtualisation Breakthrough Suppressed")
             data = {
-                "permissions":f"-{self.default_perms}",
-                "owner":self.__user,
-                "group":self.__groups,
+                "permissions":permissions,
+                "owner":owner,
+                "group":group,
                 "size":0,
                 "last_modified":self.current_formatted_data,
                 "name": os.path.basename(target)
                 }
-            self.cout("It shall be created.")
+            if verbose:
+                self.cout("It shall be created.")
             with open(os.path.join(self.__current_directory, path), "w") as file:
                 file.write("")
             self.__pathos_bus_add_meta(target, data["permissions"], data["owner"], data["group"], data["size"], data["last_modified"])
             return
         else:
             self.update_meta_entry(target, "last_modified", self.current_formatted_data)
-            self.cout(f"{os.path.basename(target)} touched.")
+            if verbose:
+                self.cout(f"{os.path.basename(target)} touched.")
             return
     
     def whoami(self):
@@ -908,7 +1063,7 @@ class Terminal:
     
     def isdir(self, path):
         'scripting method to check if a path is a directory'
-        return os.path.isdir(os.path.join(self.__root_dir, path))
+        return os.path.isdir(os.path.join(self.__current_directory, path))
     
     def cout(self, message, endl="\n"):
         'scripting method to print to the terminal'

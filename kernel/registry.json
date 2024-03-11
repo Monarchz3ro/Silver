@@ -3,13 +3,13 @@
         "users": {
             "Monarch": {
                 "password": "ez"
-                },
+            },
             "Miriel": {
                 "password": "3thirtyseven7"
-                }
             }
-        },
+        }
+    },
     "root": {
-        "password":"toor"
+        "password": "toor"
     }
 }
